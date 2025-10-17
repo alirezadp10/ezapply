@@ -51,7 +51,7 @@ DEEPINFRA_API_KEY=your_deepinfra_api_key
 
 ## 🧰 Step 1: Clone the repository
 ```bash
-git clone https://github.com/yourusername/linkedin-job-applier.git
+git clone https://github.com/alirezadp10/linkedin-job-applier.git
 cd linkedin-job-applier
 ```
 
