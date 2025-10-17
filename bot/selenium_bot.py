@@ -128,6 +128,7 @@ class SeleniumBot:
                 job_id=job['id'],
                 status="failed",
                 url=f"{url}&currentJobId={job['id']}",
+                reason=str(ex)
             )
 
     def apply_to_job(self, job_id: int):

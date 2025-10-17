@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bot.models import Job, Base
@@ -10,9 +12,9 @@ class DBManager:
         Base.metadata.create_all(self.engine)
         logger.info("✅ Database initialized.")
 
-    def save_job(self, title: str, job_id: int, status: str, url: str):
+    def save_job(self, title: str, job_id: int, status: str, url: str, reason: Optional[str] = None):
         session = self.Session()
-        job = Job(title=title, job_id=job_id, status=status, url=url)
+        job = Job(title=title, job_id=job_id, status=status, url=url, reason=reason)
         session.add(job)
         session.commit()
         session.close()

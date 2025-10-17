@@ -11,6 +11,7 @@ class Job(Base):
     title = Column(String(255))
     job_id = Column(Integer)
     status = Column(String(10))
+    reason = Column(String(255), nullable=True)
     url = Column(String(255))
     applied_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
