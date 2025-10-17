@@ -78,8 +78,8 @@ class SeleniumBot:
         self.driver.get(url)
         time.sleep(settings.DELAY_TIME)
 
-        for job_id in self.get_easy_apply_job_ids():
-            self._handle_job_application(job_id, url)
+        for job in self.get_easy_apply_jobs():
+            self._handle_job_application(job, url)
 
     def build_job_url(self, keyword: str, country_id: int) -> str:
         """Build LinkedIn job search URL."""
@@ -93,32 +93,41 @@ class SeleniumBot:
         query = "&".join(f"{k}={v}" for k, v in params.items())
         return f"{base_url}/jobs/search?{query}"
 
-    def get_easy_apply_job_ids(self):
+    def get_easy_apply_jobs(self):
         """Return a list of Easy Apply job IDs."""
-        return [
-            int(div.get_attribute("data-job-id"))
-            for div in self.driver.find_elements(By.CSS_SELECTOR, 'div[data-job-id]')
-            if "Easy Apply" in div.text
-        ]
+        jobs = []
+        for div in self.driver.find_elements(By.CSS_SELECTOR, 'div[data-job-id]'):
+            job_id_str = div.get_attribute("data-job-id")
+            if not job_id_str or not job_id_str.isdigit():
+                continue  # skip invalid or non-numeric job IDs
+            if "Easy Apply" in div.text:
+                title = div.find_element(
+                    By.CSS_SELECTOR,
+                    'div[data-job-id] .job-card-list__title--link span[aria-hidden="true"]'
+                ).text.strip()
+                jobs.append({'id': int(job_id_str), 'title': title})
+        return jobs
 
-    def _handle_job_application(self, job_id, url):
-        if self.db.is_applied_for_job(job_id):
+    def _handle_job_application(self, job, url):
+        if self.db.is_applied_for_job(job['id']):
             return  # Already applied, skip
 
         try:
-            self.apply_to_job(job_id)
+            self.apply_to_job(job['id'])
             self.db.save_job(
-                job_id=job_id,
+                title=job['title'],
+                job_id=job['id'],
                 status="applied",
-                url=f"{url}&currentJobId={job_id}",
+                url=f"{url}&currentJobId={job['id']}",
             )
-            logger.info(f"✅ Submitted application for job {job_id}")
+            logger.info(f"✅ Submitted application for job {job['id']}")
         except Exception as ex:
-            logger.error(f"❌ Error applying for job {job_id}: {ex}")
+            logger.error(f"❌ Error applying for job {job['id']}: {ex}")
             self.db.save_job(
-                job_id=job_id,
+                title=job['title'],
+                job_id=job['id'],
                 status="failed",
-                url=f"{url}&currentJobId={job_id}",
+                url=f"{url}&currentJobId={job['id']}",
             )
 
     def apply_to_job(self, job_id: int):
@@ -350,7 +359,7 @@ class SeleniumBot:
 
     def ask_from_ai(self, payload):
         """Send unfilled questions to AI and get structured answers."""
-        labels = [{"label": item["label"]} for item in payload]
+        labels = [{"label": item["label"], "answer": ""} for item in payload]
 
         body = {
             "model": settings.DEEPINFRA_MODEL_NAME,
@@ -360,6 +369,7 @@ class SeleniumBot:
                     "content": (
                             "Based on this information: ("  + settings.USER_INFORMATION + ") fill out this object: " + json.dumps(labels) +
                             "You must just return the list without any extra explanation. "
+                            "Your answers must be in the answer field corresponding to the label."
                             "If you cannot find the answer to a question based on the provided information, fill it in yourself."
                     )
                 },

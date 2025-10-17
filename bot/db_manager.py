@@ -10,9 +10,9 @@ class DBManager:
         Base.metadata.create_all(self.engine)
         logger.info("✅ Database initialized.")
 
-    def save_job(self, job_id: int, status: str, url: str):
+    def save_job(self, title: str, job_id: int, status: str, url: str):
         session = self.Session()
-        job = Job(job_id=job_id, status=status, url=url)
+        job = Job(title=title, job_id=job_id, status=status, url=url)
         session.add(job)
         session.commit()
         session.close()
