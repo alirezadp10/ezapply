@@ -49,18 +49,33 @@ DEEPINFRA_API_KEY=your_deepinfra_api_key
 
 # 📦 Installation, Setup & Workflow
 
-## 🧰 Step 1: Clone the repository
+### 🧰 Step 1: Clone the repository
 ```bash
 git clone https://github.com/alirezadp10/ezapply
 cd ezapply
 ```
 
-## 🧩 Step 2: Install dependencies
+### 🧱 Step 2: Create and activate a virtual environment (recommended)
+```bash
+python -m venv venv
+```
+
+### On macOS/Linux:
+```bash
+source venv/bin/activate
+```
+
+### On Windows (PowerShell):
+```bash
+venv\Scripts\activate
+```
+
+### 🧩 Step 3: Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-## ⚙️ Step 3: Configure environment
+### ⚙️ Step 4: Configure environment
 ```bash
 python main.py
 ```
