@@ -52,7 +52,7 @@ DEEPINFRA_API_KEY=your_deepinfra_api_key
 ## 🧰 Step 1: Clone the repository
 ```bash
 git clone https://github.com/alirezadp10/ezapply
-cd linkedin-job-applier
+cd ezapply
 ```
 
 ## 🧩 Step 2: Install dependencies
