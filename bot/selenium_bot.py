@@ -36,9 +36,12 @@ class SeleniumBot:
 
         return webdriver.Chrome(options=opts)
 
+    def kill_driver(self):
+        self.driver.quit()
+
     def run(self):
         logger.info("Ensuring login state...")
-        self.ensure_logged_in()
+        self.login_if_needed()
 
         selected_countries = settings.COUNTRIES
         if not selected_countries:
@@ -50,24 +53,9 @@ class SeleniumBot:
 
         for country in countries:
             for keyword in keywords:
-                url = self.build_job_url(keyword.strip(), Country[country].value)
-                logger.info(f"Running job search for {keyword} in {country}")
+                self._process_country_keyword(country, keyword)
 
-                self.driver.get(url)
-                time.sleep(settings.DELAY_TIME)
-
-                for job_id in self.get_easy_apply_job_ids():
-                    try:
-                        self.apply_to_job(job_id, url)
-                    except Exception as ex:
-                        self.db.save_job(job_id=job_id, status="failed", url=f"{url}&currentJobId={job_id}")
-                        logger.error(f"❌ Error applying for job {job_id}: {ex}")
-                        continue
-
-    def kill_driver(self):
-        self.driver.quit()
-
-    def ensure_logged_in(self):
+    def login_if_needed(self):
         """Ensure the user is logged in to LinkedIn."""
         self.driver.get(f"{settings.LINKEDIN_BASE_URL}/login/fa")
         time.sleep(settings.DELAY_TIME)
@@ -83,9 +71,27 @@ class SeleniumBot:
         WebDriverWait(self.driver, settings.DELAY_TIME).until(EC.url_contains("feed"))
         logger.info("✅ Login successful.")
 
+    def _process_country_keyword(self, country, keyword):
+        url = self.build_job_url(keyword.strip(), Country[country].value)
+        logger.info(f"Running job search for {keyword} in {country}")
+
+        self.driver.get(url)
+        time.sleep(settings.DELAY_TIME)
+
+        for job_id in self.get_easy_apply_job_ids():
+            self._handle_job_application(job_id, url)
+
     def build_job_url(self, keyword: str, country_id: int) -> str:
         """Build LinkedIn job search URL."""
-        return f"{settings.LINKEDIN_BASE_URL}/jobs/search?keywords={keyword}&f_TPR=r{settings.JOB_SEARCH_TIME_WINDOW}&f_WT={WorkTypes(settings.WORK_TYPE)}&geoId={country_id}"
+        base_url = settings.LINKEDIN_BASE_URL
+        params = {
+            "keywords": keyword,
+            "f_TPR": f"r{settings.JOB_SEARCH_TIME_WINDOW}",
+            "f_WT": WorkTypes(settings.WORK_TYPE),
+            "geoId": country_id,
+        }
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        return f"{base_url}/jobs/search?{query}"
 
     def get_easy_apply_job_ids(self):
         """Return a list of Easy Apply job IDs."""
@@ -95,23 +101,39 @@ class SeleniumBot:
             if "Easy Apply" in div.text
         ]
 
-    def apply_to_job(self, job_id: int, url: str):
+    def _handle_job_application(self, job_id, url):
+        if self.db.is_applied_for_job(job_id):
+            return  # Already applied, skip
+
+        try:
+            self.apply_to_job(job_id)
+            self.db.save_job(
+                job_id=job_id,
+                status="applied",
+                url=f"{url}&currentJobId={job_id}",
+            )
+            logger.info(f"✅ Submitted application for job {job_id}")
+        except Exception as ex:
+            logger.error(f"❌ Error applying for job {job_id}: {ex}")
+            self.db.save_job(
+                job_id=job_id,
+                status="failed",
+                url=f"{url}&currentJobId={job_id}",
+            )
+
+    def apply_to_job(self, job_id: int):
         """Automate the Easy Apply process for a given job."""
         logger.info(f"🟩 Applying to job: {job_id}")
-
-        if self.db.is_applied_for_job(job_id):
-            return
 
         self.open_job_posting(job_id)
         self.click_apply_button()
     
         while True:
             if self.element_exists('[type="error-pebble-icon"]'):
-                self.close_and_next(job_id, url)
-                break
+                self.close_and_next()
+                raise Exception("couldn't fill out the form.")
 
             if self.submit_if_ready(job_id):
-                self.db.save_job(job_id=job_id, status="applied", url=f"{url}&currentJobId={job_id}")
                 self.click_if_exists('[aria-label="Dismiss"]')
                 break
 
@@ -150,8 +172,7 @@ class SeleniumBot:
                 self.click_if_exists('[aria-label="Review your application"]')
         )
 
-    def close_and_next(self, job_id: int, url):
-        self.db.save_job(job_id=job_id, status="failed", url=f"{url}&currentJobId={job_id}")
+    def close_and_next(self):
         self.click_if_exists('[aria-label="Dismiss"]')
         self.click_if_exists('[data-control-name="discard_application_confirm_btn"]')
         time.sleep(settings.DELAY_TIME)
@@ -173,7 +194,6 @@ class SeleniumBot:
         """Finalize and confirm submission."""
         time.sleep(settings.DELAY_TIME)
         self.click_if_exists('[aria-label="Dismiss"]')
-        print(f"✅ Submitted application for job {job_id}")
         time.sleep(settings.DELAY_TIME)
 
     def fill_form_fields(self, payload, answers):
@@ -196,10 +216,10 @@ class SeleniumBot:
                     input_el.clear()
                     input_el.send_keys(answer)
                 else:
-                    print(f"⚠️ Unsupported tag: {tag_name} (id: {item['id']})")
+                    logger.warning(f"⚠️ Unsupported tag: {tag_name} (id: {item['id']})")
 
             except Exception as e:
-                print(f"⚠️ Error filling field {item['id']}: {e}")
+                logger.warning(f"⚠️ Error filling field {item['id']}: {e}")
 
     def fill_input_field(self, element, input_type, value):
         """Fill an <input> element based on its type."""
@@ -211,7 +231,7 @@ class SeleniumBot:
             if element.is_selected() != should_check:
                 element.click()
         else:
-            print(f"⚠️ Unsupported input type: {input_type}")
+            logger.warning(f"⚠️ Unsupported input type: {input_type}")
 
     def fill_select_field(self, element, value):
         """Fill a <select> dropdown element."""
@@ -222,7 +242,7 @@ class SeleniumBot:
             try:
                 select.select_by_value(value)
             except Exception:
-                print(f"⚠️ Could not select '{value}' for select id {element.get_attribute('id')}")
+                logger.warning(f"⚠️ Could not select '{value}' for select id {element.get_attribute('id')}")
 
     def parse_form_fields(self):
         """Collect unfilled fields inside LinkedIn’s application modal."""
@@ -236,7 +256,7 @@ class SeleniumBot:
             fields += self.extract_selects(form)
 
         except Exception as e:
-            print(f"⚠️ Error parsing form: {e}")
+            logger.warning(f"⚠️ Error parsing form: {e}")
         return fields
 
     def extract_text_inputs(self, form):
@@ -363,7 +383,7 @@ class SeleniumBot:
             return self.extract_json_array(content)
 
         except Exception as e:
-            print(f"⚠️ AI request failed: {e}")
+            logger.warning(f"⚠️ AI request failed: {e}")
             return []
 
     def extract_json_array(self, text: str):
