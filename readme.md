@@ -60,12 +60,12 @@ cd ezapply
 python -m venv venv
 ```
 
-### On macOS/Linux:
+##### On macOS/Linux:
 ```bash
 source venv/bin/activate
 ```
 
-### On Windows (PowerShell):
+##### On Windows (PowerShell):
 ```bash
 venv\Scripts\activate
 ```
