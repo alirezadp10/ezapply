@@ -79,6 +79,19 @@ class SeleniumBot:
         time.sleep(settings.DELAY_TIME)
 
         for job in self.get_easy_apply_jobs():
+            if self.db.is_applied_for_job(job['id']):
+                continue  # Already applied, skip
+
+            if not self.is_it_relevant(job['title'], keyword):
+                self.db.save_job(
+                    title=job['title'],
+                    job_id=job['id'],
+                    status="failed",
+                    url=f"{url}&currentJobId={job['id']}",
+                    reason="it's not relavent",
+                )
+                continue
+
             self._handle_job_application(job, url)
 
     def build_job_url(self, keyword: str, country_id: int) -> str:
@@ -109,9 +122,6 @@ class SeleniumBot:
         return jobs
 
     def _handle_job_application(self, job, url):
-        if self.db.is_applied_for_job(job['id']):
-            return  # Already applied, skip
-
         try:
             self.apply_to_job(job['id'])
             self.db.save_job(
@@ -417,3 +427,36 @@ class SeleniumBot:
             if item.get("label") == label:
                 return item.get("answer")
         return None
+
+    def is_it_relevant(self, title: str, keyword: str):
+        body = {
+            "model": settings.DEEPINFRA_MODEL_NAME,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        f"I want to apply for a {keyword} job opportunity. I found a job with this title: {title}. Is it relevant to my job? Just answer 'yes' or 'no'."
+                    )
+                },
+            ],
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
+        }
+
+        try:
+            response = requests.post(
+                settings.DEEPINFRA_API_URL,
+                headers=headers,
+                json=body,
+                timeout=60
+            ).json()
+
+            content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            return True if content.lower() == "yes" else False
+
+        except Exception as e:
+            logger.warning(f"⚠️ AI request failed: {e}")
+            return []
