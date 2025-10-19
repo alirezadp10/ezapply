@@ -9,7 +9,6 @@ from bot.driver_manager import DriverManager
 from bot.linkedin_auth import LinkedInAuth
 from bot.job_finder import JobFinder
 from bot.job_applicator import JobApplicator
-from bot.ai_service import AIService
 
 class SeleniumBot:
     def __init__(self, name: str, db_url: str):

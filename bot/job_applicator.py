@@ -63,34 +63,3 @@ class JobApplicator:
         self._click_if_exists('[aria-label="Dismiss"]')
         self._click_if_exists('[data-control-name="discard_application_confirm_btn"]')
         time.sleep(settings.DELAY_TIME)
-
-
-
-
-
-    # def apply_to_job(self, job_id: int):
-    #     """Automate the Easy Apply process for a given job."""
-    #     logger.info(f"🟩 Applying to job: {job_id}")
-    #
-    #     self.open_job_posting(job_id)
-    #     self.click_apply_button()
-    #
-    #     while True:
-    #         if self.element_exists('[type="error-pebble-icon"]'):
-    #             self._close_and_next()
-    #             raise Exception("couldn't fill out the form.")
-    #
-    #         if self.submit_if_ready(job_id):
-    #             self.click_if_exists('[aria-label="Dismiss"]')
-    #             break
-    #
-    #         if self.handle_resume_step():
-    #             continue
-    #
-    #         payload = self.parse_form_fields()
-    #         if payload:
-    #             answers = self.ask_from_ai(payload)
-    #             self.fill_form_fields(payload, answers)
-    #
-    #         if self.next_step_or_review():
-    #             continue
