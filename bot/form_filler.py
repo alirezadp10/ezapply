@@ -1,5 +1,6 @@
 from loguru import logger
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 
 class FormFiller:
     def __init__(self, driver):
@@ -11,7 +12,7 @@ class FormFiller:
             if not answer:
                 continue
             try:
-                el = self.driver.find_element_by_id(item["id"])
+                el = self.driver.find_element(By.ID ,item["id"])
                 if el.tag_name == "input":
                     el.clear()
                     el.send_keys(answer)

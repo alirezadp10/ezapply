@@ -1,3 +1,4 @@
+import os
 import time
 from loguru import logger
 from selenium.webdriver.common.by import By
@@ -22,6 +23,12 @@ class SeleniumBot:
     def run(self):
         logger.info("Ensuring login state...")
         self.auth.login_if_needed()
+
+        if os.getenv('TEST_WITH'):
+            self.driver.get(self.finder.build_job_url(job_id=int(os.getenv('TEST_WITH'))))
+            time.sleep(settings.DELAY_TIME)
+            self.applicator.apply_to_job(int(os.getenv('TEST_WITH')))
+            return
 
         countries = (
             [c.strip().upper() for c in settings.COUNTRIES.split(",") if c.strip()]

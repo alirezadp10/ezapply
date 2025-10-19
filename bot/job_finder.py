@@ -1,3 +1,5 @@
+from typing import Optional
+
 from selenium.webdriver.common.by import By
 from bot.enums import WorkTypes
 from bot.config import settings
@@ -7,17 +9,26 @@ class JobFinder:
         self.driver = driver
         self.db = db
 
-    def build_job_url(self, keyword: str, country_id: int) -> str:
+    def build_job_url(self, keyword: Optional[str] = None, country_id: Optional[int] = None, job_id: Optional[int] = None) -> str:
         base_url = settings.LINKEDIN_BASE_URL
-        quoted_keyword = f'"{keyword.strip()}"'
 
-        params = {
-            "keywords": quoted_keyword,
-            "f_TPR": f"r{settings.JOB_SEARCH_TIME_WINDOW}",
-            "f_WT": WorkTypes(settings.WORK_TYPE),
-            "geoId": country_id,
-        }
-        query = "&".join(f"{k}={v}" for k, v in params.items())
+        if job_id is not None:
+            return f"{base_url}/jobs/search?job_id={job_id}"
+
+        params = {}
+
+        if keyword:
+            quoted_keyword = f'"{keyword.strip()}"'
+            params["keywords"] = quoted_keyword
+
+        if country_id:
+            params["geoId"] = country_id
+
+        params["f_TPR"] = f"r{settings.JOB_SEARCH_TIME_WINDOW}"
+        params["f_WT"] = WorkTypes(settings.WORK_TYPE)
+
+        query = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+
         return f"{base_url}/jobs/search?{query}"
 
     def get_easy_apply_jobs(self):

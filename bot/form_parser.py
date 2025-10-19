@@ -1,5 +1,10 @@
+import time
+
 from loguru import logger
 from selenium.webdriver.common.by import By
+
+from bot.config import settings
+
 
 class FormParser:
     def __init__(self, driver):
