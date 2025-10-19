@@ -1,5 +1,7 @@
+import time
+from loguru import logger
 from selenium.webdriver.common.by import By
-from bot.enums import WorkTypes
+from bot.enums import Country, WorkTypes
 from bot.config import settings
 
 class JobFinder:
@@ -9,8 +11,10 @@ class JobFinder:
 
     def build_job_url(self, keyword: str, country_id: int) -> str:
         base_url = settings.LINKEDIN_BASE_URL
+        quoted_keyword = f'"{keyword.strip()}"'
+
         params = {
-            "keywords": keyword,
+            "keywords": quoted_keyword,
             "f_TPR": f"r{settings.JOB_SEARCH_TIME_WINDOW}",
             "f_WT": WorkTypes(settings.WORK_TYPE),
             "geoId": country_id,

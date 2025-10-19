@@ -42,15 +42,6 @@ class SeleniumBot:
         for job in self.finder.get_easy_apply_jobs():
             if self.db.is_applied_for_job(job['id']):
                 continue
-            if not AIService.is_relevant_job(job['title']):
-                self.db.save_job(
-                    title=job['title'],
-                    job_id=job['id'],
-                    status="failed",
-                    url=f"{url}&currentJobId={job['id']}",
-                    reason="not relevant"
-                )
-                continue
             try:
                 self.applicator.apply_to_job(job, url)
                 self.db.save_job(
