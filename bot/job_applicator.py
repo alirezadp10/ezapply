@@ -1,7 +1,5 @@
-import time
 from loguru import logger
 from selenium.webdriver.common.by import By
-from bot.config import settings
 from bot.ai_service import AIService
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
