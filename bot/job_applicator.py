@@ -20,10 +20,17 @@ class JobApplicator:
     def apply_to_job(self, job_id: int):
         if self.driver.find_elements(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'):
             self.driver.find_element(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]').click()
-            time.sleep(settings.DELAY_TIME * 2)
 
-        self.driver.find_element(By.ID, "jobs-apply-button-id").click()
-        time.sleep(settings.DELAY_TIME * 2)
+        try:
+            logger.info(f"yuhoooooo")
+            WebDriverWait(self.driver, 120).until(
+                EC.presence_of_element_located((By.ID, "jobs-apply-button-id"))
+            ).click()
+            time.sleep(settings.DELAY_TIME)
+        except Exception as e:
+            logger.error("couldn't find the element.")
+            raise e
+
 
         while True:
             payload = self.parser.parse_form_fields()

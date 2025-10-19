@@ -21,5 +21,5 @@ class LinkedInAuth:
         self.driver.find_element(By.NAME, "session_password").send_keys(settings.LINKEDIN_PASSWORD)
         self.driver.find_element(By.CSS_SELECTOR, '[data-litms-control-urn="login-submit"]').click()
 
-        time.sleep(settings.DELAY_TIME * 2)
+        time.sleep(settings.DELAY_TIME)
         logger.info("✅ Login successful.")

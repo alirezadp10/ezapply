@@ -55,7 +55,7 @@ class SeleniumBot:
             if self.db.is_applied_for_job(job['id']):
                 continue
             try:
-                self.applicator.apply_to_job(job)
+                self.applicator.apply_to_job(job['id'])
                 self.db.save_job(
                     title=job['title'],
                     job_id=job['id'],
