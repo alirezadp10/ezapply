@@ -1,4 +1,4 @@
-# 🤖 LinkedIn Job Auto Applier Bot
+# 🤖 LinkedIn Job Auto Applier Bot (WIP)
 
 An intelligent **LinkedIn automation bot** that automatically searches for jobs and applies using the **Easy Apply** feature.  
 It uses **Selenium** for browser automation and **DeepInfra’s AI models** to intelligently answer application form questions.
