@@ -13,6 +13,7 @@ class AIService:
                 "content": (
                     f"Based on this information: ({settings.USER_INFORMATION}) "
                     f"fill out this object: {json.dumps(labels)}. "
+                    "If you cannot find the answer to a question based on the information, make it up by yourself. "
                     "Return only the list, no explanations."
                 )
             }]
