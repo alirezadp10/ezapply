@@ -1,5 +1,7 @@
 import time
 from loguru import logger
+from selenium.webdriver.common.by import By
+
 from bot.db_manager import DBManager
 from bot.config import settings
 from bot.enums import Country
@@ -39,11 +41,15 @@ class SeleniumBot:
         self.driver.get(url)
         time.sleep(settings.DELAY_TIME)
 
+        if self._has_no_results():
+            logger.info(f"No results found for '{keyword}' in {country}. Skipping.")
+            return
+
         for job in self.finder.get_easy_apply_jobs():
             if self.db.is_applied_for_job(job['id']):
                 continue
             try:
-                self.applicator.apply_to_job(job, url)
+                self.applicator.apply_to_job(job)
                 self.db.save_job(
                     title=job['title'],
                     job_id=job['id'],
@@ -59,3 +65,7 @@ class SeleniumBot:
                     url=f"{url}&currentJobId={job['id']}",
                     reason=str(e)
                 )
+
+    def _has_no_results(self) -> bool:
+        no_results = self.driver.find_elements(By.CLASS_NAME, 'jobs-search-no-results-banner')
+        return bool(no_results)

@@ -1,7 +1,5 @@
-import time
-from loguru import logger
 from selenium.webdriver.common.by import By
-from bot.enums import Country, WorkTypes
+from bot.enums import WorkTypes
 from bot.config import settings
 
 class JobFinder:

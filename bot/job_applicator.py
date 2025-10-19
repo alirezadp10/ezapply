@@ -13,7 +13,7 @@ class JobApplicator:
         self.parser = FormParser(driver)
         self.filler = FormFiller(driver)
 
-    def apply_to_job(self, job, base_url):
+    def apply_to_job(self, job):
         job_id = job['id']
         logger.info(f"🟩 Applying to job {job_id}")
         self.driver.find_element(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]').click()
@@ -23,13 +23,13 @@ class JobApplicator:
 
         while True:
             payload = self.parser.parse_form_fields()
-            if not payload:
-                if self._submit_if_ready(job_id):
-                    break
-                continue
 
-            answers = AIService.ask_form_answers(payload)
-            self.filler.fill_fields(payload, answers)
+            if payload:
+                answers = AIService.ask_form_answers(payload)
+                self.filler.fill_fields(payload, answers)
+
+            if self._submit_if_ready(job_id):
+                break
 
             if self._next_step():
                 continue
