@@ -2,6 +2,8 @@ import os
 import time
 from loguru import logger
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from bot.db_manager import DBManager
 from bot.config import settings
@@ -43,12 +45,10 @@ class SeleniumBot:
 
     def _process_country_keyword(self, country, keyword):
         url = self.finder.build_job_url(keyword, Country[country].value)
-        logger.info(f"Running job search for '{keyword}' in {country}")
         self.driver.get(url)
         time.sleep(settings.DELAY_TIME)
 
         if self._has_no_results():
-            logger.info(f"No results found for '{keyword}' in {country}. Skipping.")
             return
 
         for job in self.finder.get_easy_apply_jobs():

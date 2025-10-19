@@ -13,7 +13,7 @@ class JobFinder:
         base_url = settings.LINKEDIN_BASE_URL
 
         if job_id is not None:
-            return f"{base_url}/jobs/search?job_id={job_id}"
+            return f"{base_url}/jobs/search?currentJobId={job_id}"
 
         params = {}
 

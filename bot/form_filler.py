@@ -1,3 +1,5 @@
+import time
+
 from loguru import logger
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
