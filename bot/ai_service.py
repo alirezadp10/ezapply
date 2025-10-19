@@ -32,12 +32,12 @@ class AIService:
             return []
 
     @staticmethod
-    def is_relevant_job(title: str, keyword: str) -> bool:
+    def is_relevant_job(title: str) -> bool:
         body = {
             "model": settings.DEEPINFRA_MODEL_NAME,
             "messages": [{
                 "role": "system",
-                "content": f"Is the job '{title}' relevant to a {keyword} position? Answer yes or no."
+                "content": f"Is the job '{title}' relevant to any positions like {settings.KEYWORDS}? Just answer yes or no without any extra."
             }]
         }
         headers = {

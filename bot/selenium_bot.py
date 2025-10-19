@@ -42,23 +42,29 @@ class SeleniumBot:
         for job in self.finder.get_easy_apply_jobs():
             if self.db.is_applied_for_job(job['id']):
                 continue
-            if not AIService.is_relevant_job(job['title'], keyword):
+            if not AIService.is_relevant_job(job['title']):
                 self.db.save_job(
-                    title=job['title'], job_id=job['id'],
-                    status="failed", url=f"{url}&currentJobId={job['id']}",
+                    title=job['title'],
+                    job_id=job['id'],
+                    status="failed",
+                    url=f"{url}&currentJobId={job['id']}",
                     reason="not relevant"
                 )
                 continue
             try:
                 self.applicator.apply_to_job(job, url)
                 self.db.save_job(
-                    title=job['title'], job_id=job['id'],
-                    status="applied", url=f"{url}&currentJobId={job['id']}"
+                    title=job['title'],
+                    job_id=job['id'],
+                    status="applied",
+                    url=f"{url}&currentJobId={job['id']}"
                 )
             except Exception as e:
                 logger.error(f"❌ Error applying to job {job['id']}: {e}")
                 self.db.save_job(
-                    title=job['title'], job_id=job['id'],
-                    status="failed", url=f"{url}&currentJobId={job['id']}",
+                    title=job['title'],
+                    job_id=job['id'],
+                    status="failed",
+                    url=f"{url}&currentJobId={job['id']}",
                     reason=str(e)
                 )
