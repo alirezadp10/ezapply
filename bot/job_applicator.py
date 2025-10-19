@@ -1,6 +1,9 @@
+import time
+
 from loguru import logger
 from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
+from bot.config import settings
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 
@@ -16,8 +19,10 @@ class JobApplicator:
 
         if self.driver.find_elements(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'):
             self.driver.find_element(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]').click()
+            time.sleep(settings.DELAY_TIME)
 
         self.driver.find_element(By.ID, "jobs-apply-button-id").click()
+        time.sleep(settings.DELAY_TIME)
 
         while True:
             payload = self.parser.parse_form_fields()
@@ -51,6 +56,7 @@ class JobApplicator:
         try:
             el = self.driver.find_element(By.CSS_SELECTOR, selector)
             el.click()
+            time.sleep(settings.DELAY_TIME)
             return True
         except Exception:
             return False
