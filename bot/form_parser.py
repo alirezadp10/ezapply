@@ -1,4 +1,3 @@
-from loguru import logger
 from selenium.webdriver.common.by import By
 
 
@@ -8,13 +7,11 @@ class FormParser:
 
     def parse_form_fields(self):
         fields = []
-        try:
-            modal = self.driver.find_element(By.CSS_SELECTOR, 'div[data-test-modal]')
+        modal = self.driver.find_element(By.CSS_SELECTOR, 'div[data-test-modal]')
+        if modal.find_elements(By.TAG_NAME, "form"):
             form = modal.find_element(By.TAG_NAME, "form")
             fields += self.extract_inputs(form)
             fields += self.extract_selects(form)
-        except Exception as e:
-            logger.warning(f"⚠️ Error parsing form: {e}")
         return fields
 
     def extract_inputs(self, form):
