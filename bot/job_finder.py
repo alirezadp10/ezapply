@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 from selenium.webdriver.common.by import By
@@ -33,6 +34,7 @@ class JobFinder:
 
     def get_easy_apply_jobs(self):
         jobs = []
+        time.sleep(settings.DELAY_TIME)
         for div in self.driver.find_elements(By.CSS_SELECTOR, 'div[data-job-id]'):
             job_id_str = div.get_attribute("data-job-id")
             if not job_id_str or not job_id_str.isdigit():

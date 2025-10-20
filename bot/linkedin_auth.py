@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bot.config import settings
+from bot.utils import wait_until_page_loaded
+
 
 class LinkedInAuth:
     def __init__(self, driver):
@@ -20,6 +22,8 @@ class LinkedInAuth:
         self.driver.find_element(By.NAME, "session_key").send_keys(settings.LINKEDIN_USERNAME)
         self.driver.find_element(By.NAME, "session_password").send_keys(settings.LINKEDIN_PASSWORD)
         self.driver.find_element(By.CSS_SELECTOR, '[data-litms-control-urn="login-submit"]').click()
+
+        wait_until_page_loaded(self.driver, f'[data-litms-control-urn="login-submit"]')
 
         time.sleep(settings.DELAY_TIME)
         logger.info("✅ Login successful.")

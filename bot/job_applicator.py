@@ -1,14 +1,10 @@
-import time
-
 from loguru import logger
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
 from bot.ai_service import AIService
-from bot.config import settings
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
+from bot.utils import wait_until_page_loaded
+
 
 class JobApplicator:
     def __init__(self, driver, db):
@@ -20,17 +16,10 @@ class JobApplicator:
     def apply_to_job(self, job_id: int):
         if self.driver.find_elements(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'):
             self.driver.find_element(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]').click()
+        wait_until_page_loaded(self.driver, f'div[data-job-id="{job_id}"]')
 
-        try:
-            logger.info(f"yuhoooooo")
-            WebDriverWait(self.driver, 120).until(
-                EC.presence_of_element_located((By.ID, "jobs-apply-button-id"))
-            ).click()
-            time.sleep(settings.DELAY_TIME)
-        except Exception as e:
-            logger.error("couldn't find the element.")
-            raise e
-
+        self.driver.find_element(By.ID, "jobs-apply-button-id").click()
+        wait_until_page_loaded(self.driver, "jobs-apply-button-id")
 
         while True:
             payload = self.parser.parse_form_fields()
@@ -62,9 +51,8 @@ class JobApplicator:
 
     def _click_if_exists(self, selector):
         try:
-            el = self.driver.find_element(By.CSS_SELECTOR, selector)
-            el.click()
-            time.sleep(settings.DELAY_TIME)
+            self.driver.find_element(By.CSS_SELECTOR, selector).click()
+            wait_until_page_loaded(self.driver, selector)
             return True
         except Exception:
             return False

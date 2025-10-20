@@ -14,7 +14,6 @@ def main():
     except Exception as e:
         logger.exception(f"❌ Error while running bot: {e}")
     finally:
-        # Properly close WebDriver
         if bot.driver:
             DriverManager.close_driver(bot.driver)
         logger.info("🛑 Bot finished execution.")

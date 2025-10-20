@@ -10,6 +10,7 @@ class Settings:
     HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
     USER_DATA_DIR: str = os.getenv("USER_DATA_DIR", "/tmp/chrome-user-data")
     DELAY_TIME: int = int(os.getenv("DELAY_TIME", 5))
+    WAIT_WARN_AFTER: int = int(os.getenv("WAIT_WARN_AFTER", 10))
 
     LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
     LINKEDIN_USERNAME: str = os.getenv("LINKEDIN_USERNAME")

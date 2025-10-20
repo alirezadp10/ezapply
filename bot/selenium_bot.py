@@ -2,9 +2,6 @@ import os
 import time
 from loguru import logger
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
 from bot.db_manager import DBManager
 from bot.config import settings
 from bot.enums import Country
@@ -12,6 +9,8 @@ from bot.driver_manager import DriverManager
 from bot.linkedin_auth import LinkedInAuth
 from bot.job_finder import JobFinder
 from bot.job_applicator import JobApplicator
+from bot.utils import wait_until_page_loaded
+
 
 class SeleniumBot:
     def __init__(self, name: str, db_url: str):
@@ -46,12 +45,15 @@ class SeleniumBot:
     def _process_country_keyword(self, country, keyword):
         url = self.finder.build_job_url(keyword, Country[country].value)
         self.driver.get(url)
-        time.sleep(settings.DELAY_TIME)
+        
+        wait_until_page_loaded(self.driver, url)
 
         if self._has_no_results():
             return
 
-        for job in self.finder.get_easy_apply_jobs():
+        jobs = self.finder.get_easy_apply_jobs()
+
+        for job in jobs:
             if self.db.is_applied_for_job(job['id']):
                 continue
             try:

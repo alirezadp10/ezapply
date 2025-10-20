@@ -19,5 +19,5 @@ class DriverManager:
         return webdriver.Chrome(options=opts)
 
     @staticmethod
-    def close_driver(driver):
+    def close_driver(driver: webdriver):
         driver.quit()
