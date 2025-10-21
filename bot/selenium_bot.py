@@ -57,6 +57,8 @@ class SeleniumBot:
             if self.db.is_applied_for_job(job['id']):
                 continue
             try:
+                self.driver.get(self.finder.build_job_url(job_id=job['id']))
+                wait_until_page_loaded(self.driver, f'div[data-job-id="{job["id"]}"]')
                 self.applicator.apply_to_job(job['id'])
                 self.db.save_job(
                     title=job['title'],

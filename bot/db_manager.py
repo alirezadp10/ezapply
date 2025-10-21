@@ -23,7 +23,7 @@ class DBManager:
         session = self.Session()
         try:
             field = session.execute(
-                select(Field).where(Field.label == label, Field.job_id == job_id)
+                select(Field).where(Field.label == label)
             ).scalar_one_or_none()
 
             if field:

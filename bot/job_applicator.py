@@ -14,12 +14,6 @@ class JobApplicator:
         self.filler = FormFiller(driver)
 
     def apply_to_job(self, job_id: int):
-        if self.driver.find_elements(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'):
-            self.driver.find_element(
-                By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'
-            ).click()
-        wait_until_page_loaded(self.driver, f'div[data-job-id="{job_id}"]')
-
         try:
             self.driver.find_element(By.ID, "jobs-apply-button-id").click()
             wait_until_page_loaded(self.driver, "jobs-apply-button-id")
