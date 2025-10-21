@@ -15,7 +15,7 @@ def wait_until_page_loaded(driver: webdriver, context: str) -> None:
 
         elapsed = time.time() - start_time
         if elapsed >= next_warn_at:
-            logger.warning(f"[{context}] ⚠️ Page still not loaded after {settings.WAIT_WARN_AFTER} seconds.")
+            logger.warning(f"[{context}] ⚠️ Page still not loaded after {next_warn_at} seconds.")
             next_warn_at += settings.WAIT_WARN_AFTER
 
         if elapsed > timeout:

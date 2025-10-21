@@ -1,8 +1,10 @@
 from typing import Optional
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
-from bot.models import Job, Base
+from bot.models import Job, Base, Field
+from sqlalchemy.exc import IntegrityError
+
 
 class DBManager:
     def __init__(self, db_url: str):
@@ -16,6 +18,27 @@ class DBManager:
         session.add(job)
         session.commit()
         session.close()
+
+    def save_field(self, label: str, value: str, tag: str, job_id: int):
+        session = self.Session()
+        try:
+            field = session.execute(
+                select(Field).where(Field.label == label, Field.job_id == job_id)
+            ).scalar_one_or_none()
+
+            if field:
+                field.value = value
+                field.tag = tag
+            else:
+                field = Field(label=label, value=value, tag=tag, job_id=job_id)
+                session.add(field)
+
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def is_applied_for_job(self, job_id: int) -> bool:
         session = self.Session()

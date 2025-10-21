@@ -15,7 +15,9 @@ class JobApplicator:
 
     def apply_to_job(self, job_id: int):
         if self.driver.find_elements(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'):
-            self.driver.find_element(By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]').click()
+            self.driver.find_element(
+                By.CSS_SELECTOR, f'div[data-job-id="{job_id}"]'
+            ).click()
         wait_until_page_loaded(self.driver, f'div[data-job-id="{job_id}"]')
 
         self.driver.find_element(By.ID, "jobs-apply-button-id").click()
@@ -26,7 +28,8 @@ class JobApplicator:
 
             if payload:
                 answers = AIService.ask_form_answers(payload)
-                self.filler.fill_fields(payload, answers)
+                fields = self.filler.fill_fields(payload, answers)
+                self._save_fields(fields, job_id)
 
             if self.driver.find_elements(By.CSS_SELECTOR, '[type="error-pebble-icon"]'):
                 self._close_and_next()
@@ -39,8 +42,9 @@ class JobApplicator:
                 continue
 
     def _next_step(self):
-        return self._click_if_exists('[aria-label="Continue to next step"]') or \
-            self._click_if_exists('[aria-label="Review your application"]')
+        return self._click_if_exists(
+            '[aria-label="Continue to next step"]'
+        ) or self._click_if_exists('[aria-label="Review your application"]')
 
     def _submit_if_ready(self, job_id):
         if self._click_if_exists('[aria-label="Submit application"]'):
@@ -60,3 +64,12 @@ class JobApplicator:
     def _close_and_next(self):
         self._click_if_exists('[aria-label="Dismiss"]')
         self._click_if_exists('[data-control-name="discard_application_confirm_btn"]')
+
+    def _save_fields(self, fields: list, job_id: int):
+        for field in fields:
+            self.db.save_field(
+                label=field["label"],
+                value=field["value"],
+                tag=field["tag"],
+                job_id=job_id,
+            )
