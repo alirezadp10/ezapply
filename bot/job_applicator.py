@@ -20,8 +20,11 @@ class JobApplicator:
             ).click()
         wait_until_page_loaded(self.driver, f'div[data-job-id="{job_id}"]')
 
-        self.driver.find_element(By.ID, "jobs-apply-button-id").click()
-        wait_until_page_loaded(self.driver, "jobs-apply-button-id")
+        try:
+            self.driver.find_element(By.ID, "jobs-apply-button-id").click()
+            wait_until_page_loaded(self.driver, "jobs-apply-button-id")
+        except Exception:
+            raise Exception("couldn't find the apply button.")
 
         while True:
             payload = self.parser.parse_form_fields()
