@@ -13,7 +13,7 @@ class LinkedInAuth:
 
     def login_if_needed(self):
         self.driver.get(f"{settings.LINKEDIN_BASE_URL}/login/fa")
-        time.sleep(settings.DELAY_TIME)
+        wait_until_page_loaded(self.driver, 'login')
 
         if any(keyword in self.driver.current_url for keyword in ("feed", "notifications")):
             logger.info("✅ Already logged in.")
