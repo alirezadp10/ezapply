@@ -27,9 +27,12 @@ class FormFiller:
 
             # Special-case: fieldset that contains radios -> treat as "radio"
             if tag == "fieldset":
-                has_radio = len(el.find_elements(By.CSS_SELECTOR, 'input[type="radio"]')) > 0
+                has_radio = el.find_elements(By.CSS_SELECTOR, 'input[type="radio"]')
+                has_checkbox = el.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
                 if has_radio:
                     inferred_type = "radio"
+                elif has_checkbox:
+                    inferred_type = "checkbox-group"
 
             result.append({"label": item["label"], "value": answer, "type": inferred_type})
 
@@ -75,11 +78,11 @@ class FormFiller:
                 el.send_keys(str(answer))
 
             elif tag == "fieldset":
-                # Handle radio groups (your LinkedIn Easy Apply example)
-                clicked = self._click_radio_in_fieldset(el, str(answer))
-                if not clicked:
-                    # Optional: log/debug when no radio matched
-                    pass
+                if el.find_elements(By.CSS_SELECTOR, 'input[type="radio"]'):
+                    self._click_radio_in_fieldset(el, str(answer))
+                elif el.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]'):
+                    self._set_checkboxes_in_fieldset(el, answer, unselect_others=False)
+                continue
 
             else:
                 # Generic fallback: try to type into contenteditable or input-like children
@@ -189,3 +192,110 @@ class FormFiller:
                 return True
 
         return False
+
+    def _set_checkboxes_in_fieldset(self, fieldset, answer, unselect_others: bool = False) -> bool:
+        if answer is None or str(answer).strip() == "":
+            return False
+
+        # Normalize desired values (lowercased set)
+        if isinstance(answer, (list, tuple, set)):
+            desired = {str(a).strip().lower() for a in answer if str(a).strip() != ""}
+        else:
+            # comma or semicolon separated
+            chunks = [x.strip() for x in str(answer).split(",")]
+            if len(chunks) == 1:  # also support semicolons
+                chunks = [x.strip() for x in str(answer).split(";")]
+            desired = {c.lower() for c in chunks if c}
+
+        # discover all checkboxes in the group
+        checkboxes = fieldset.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
+
+        # map: input id -> label element and text (lower)
+        labels = {
+            lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
+            for lab in fieldset.find_elements(By.TAG_NAME, "label")
+            if lab.get_attribute("for")
+        }
+
+        def click_label_for(input_el):
+            rid = input_el.get_attribute("id")
+            if not rid or rid not in labels:
+                return False
+            label_el = labels[rid][0]
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", label_el)
+            try:
+                self.wait.until(EC.element_to_be_clickable(label_el)).click()
+            except (ElementClickInterceptedException, TimeoutException):
+                # JS-click fallback
+                self.driver.execute_script("arguments[0].click();", label_el)
+            return True
+
+        changed = False
+        seen_target = False
+
+        # Build fast lookup structures
+        by_value = {}
+        for cb in checkboxes:
+            val = (cb.get_attribute("value") or "").strip().lower()
+            by_value.setdefault(val, []).append(cb)
+
+        by_label_text = {}
+        for cb in checkboxes:
+            rid = cb.get_attribute("id")
+            if rid and rid in labels:
+                by_label_text.setdefault(labels[rid][1], []).append(cb)
+
+        # First pass: ensure desired ones are checked (try exact value, then exact label, then contains label)
+        for want in desired:
+            # exact value match
+            candidates = by_value.get(want, [])
+            # if none, exact label match
+            if not candidates:
+                candidates = by_label_text.get(want, [])
+            # if none, contains-in-label (handles long labels like “European (...)”)
+            if not candidates:
+                for label_txt, cbs in by_label_text.items():
+                    if want in label_txt:
+                        candidates.extend(cbs)
+
+            if not candidates:
+                continue  # no match for this desired option
+
+            seen_target = True
+            for cb in candidates:
+                if not cb.is_selected():
+                    # prefer label click (avoids interception)
+                    if not click_label_for(cb):
+                        # fallback: click input
+                        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", cb)
+                        try:
+                            self.wait.until(EC.element_to_be_clickable(cb)).click()
+                        except (ElementClickInterceptedException, TimeoutException):
+                            self.driver.execute_script("arguments[0].click();", cb)
+                    changed = True
+
+        # Optional: uncheck boxes not in desired
+        if unselect_others:
+            for cb in checkboxes:
+                # determine this checkbox's identity string to compare against `desired`
+                val = (cb.get_attribute("value") or "").strip().lower()
+                rid = cb.get_attribute("id")
+                label_txt = labels.get(rid, (None, ""))[1] if rid in labels else ""
+                identity_hits = {val, label_txt}
+                # also consider "contains" match (avoid unchecking things the user asked for)
+                is_desired = (
+                    (val in desired) or
+                    (label_txt in desired) or
+                    any(w in label_txt for w in desired if len(w) >= 3)  # small guard
+                )
+                if cb.is_selected() and not is_desired:
+                    # uncheck via label when possible
+                    if not click_label_for(cb):
+                        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", cb)
+                        try:
+                            self.wait.until(EC.element_to_be_clickable(cb)).click()
+                        except (ElementClickInterceptedException, TimeoutException):
+                            self.driver.execute_script("arguments[0].click();", cb)
+                    changed = True
+
+        return seen_target or changed
