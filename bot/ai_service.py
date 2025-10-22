@@ -67,3 +67,18 @@ class AIService:
                 return json.loads(cleaned)
             except Exception:
                 return []
+
+    @staticmethod
+    def get_embedding(text: str) -> list:
+        resp = requests.post(
+            settings.DEEPINFRA_EMBEDDING_API_URL,
+            headers={
+                "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "inputs": [text],
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()["embeddings"]

@@ -26,8 +26,9 @@ class SeleniumBot:
         self.auth.login_if_needed()
 
         if os.getenv('TEST_WITH'):
-            self.driver.get(self.finder.build_job_url(job_id=int(os.getenv('TEST_WITH'))))
-            time.sleep(settings.DELAY_TIME)
+            url = self.finder.build_job_url(job_id=int(os.getenv('TEST_WITH')))
+            self.driver.get(url)
+            wait_until_page_loaded(self.driver, url, wait_for=(By.ID, "jobs-apply-button-id"))
             self.applicator.apply_to_job(int(os.getenv('TEST_WITH')))
             return
 
@@ -45,7 +46,6 @@ class SeleniumBot:
     def _process_country_keyword(self, country, keyword):
         url = self.finder.build_job_url(keyword, Country[country].value)
         self.driver.get(url)
-        
         wait_until_page_loaded(self.driver, url)
 
         if self._has_no_results():
@@ -58,7 +58,7 @@ class SeleniumBot:
                 continue
             try:
                 self.driver.get(self.finder.build_job_url(job_id=job['id']))
-                wait_until_page_loaded(self.driver, f'div[data-job-id="{job["id"]}"]')
+                wait_until_page_loaded(self.driver, f'div[data-job-id="{job["id"]}"]', wait_for=(By.ID, "jobs-apply-button-id"))
                 self.applicator.apply_to_job(job['id'])
                 self.db.save_job(
                     title=job['title'],

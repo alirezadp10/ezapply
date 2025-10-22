@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, LargeBinary
 from datetime import datetime
-
 from bot.models import Base
 
 
@@ -10,6 +9,7 @@ class Field(Base):
     id = Column(Integer, primary_key=True, index=True)
     label = Column(String(255))
     value = Column(String(255))
-    tag = Column(String(20))
+    type = Column(String(20))
     job_id = Column(Integer)
+    embedding = Column(LargeBinary, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -64,9 +64,11 @@ class JobApplicator:
 
     def _save_fields(self, fields: list, job_id: int):
         for field in fields:
+            embeddings = AIService.get_embedding(field["label"])
             self.db.save_field(
                 label=field["label"],
                 value=field["value"],
-                tag=field["tag"],
+                type=field["type"],
+                embeddings=embeddings,
                 job_id=job_id,
             )
