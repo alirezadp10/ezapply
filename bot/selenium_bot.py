@@ -160,17 +160,17 @@ class SeleniumBot:
     # Config helpers
     # -------------------------
     @staticmethod
-    def _read_test_job_ids() -> List[int]:
+    def _read_test_job_ids() -> List[str]:
         raw = os.getenv("TEST_WITH", "").strip()
         if not raw:
             return []
-        ids: List[int] = []
+        ids: List[str] = []
         for token in raw.split(","):
             token = token.strip()
             if not token:
                 continue
             try:
-                ids.append(int(token))
+                ids.append(token)
             except ValueError:
                 logger.warning(f"Ignoring invalid TEST_WITH id: {token}")
         return ids
