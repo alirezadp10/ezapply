@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Dict, Optional, Iterable, Tuple
+from typing import List, Dict, Iterable, Tuple
 
 import numpy as np
 from loguru import logger
@@ -10,6 +9,7 @@ from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
+from bot.schemas import FormItemSchema
 from bot.utils import wait_until_page_loaded
 
 
@@ -20,10 +20,10 @@ from bot.utils import wait_until_page_loaded
 APPLY_BTN_ID = "jobs-apply-button-id"
 
 SEL_NEXT_STEP = '[aria-label="Continue to next step"]'
-SEL_REVIEW     = '[aria-label="Review your application"]'
-SEL_SUBMIT     = '[aria-label="Submit application"]'
-SEL_DISMISS    = '[aria-label="Dismiss"]'
-SEL_DISCARD    = '[data-control-name="discard_application_confirm_btn"]'
+SEL_REVIEW = '[aria-label="Review your application"]'
+SEL_SUBMIT = '[aria-label="Submit application"]'
+SEL_DISMISS = '[aria-label="Dismiss"]'
+SEL_DISCARD = '[data-control-name="discard_application_confirm_btn"]'
 SEL_ERROR_ICON = '[type="error-pebble-icon"]'
 
 # Similarity must be in [0, 1]. 0.95 was in original code; keep as default but make it tunable.
@@ -36,34 +36,23 @@ MAX_STEPS_PER_APPLICATION = 30
 # Exceptions
 # ---------------------------
 
+
 class JobApplyError(RuntimeError):
     """Base exception for job application flow errors."""
 
+
 class ApplyButtonNotFound(JobApplyError):
     """Raised when the initial apply button cannot be found/clicked."""
+
 
 class FormFillError(JobApplyError):
     """Raised when we detect an error pebble during form filling."""
 
 
 # ---------------------------
-# Data structures
-# ---------------------------
-
-@dataclass
-class FormItem:
-    label: str
-    answer: str = ""
-    embeddings: bytes = b""  # float32 bytes
-
-    @staticmethod
-    def from_payload_entry(entry: Dict[str, str]) -> "FormItem":
-        return FormItem(label=entry["label"])
-
-
-# ---------------------------
 # Main service
 # ---------------------------
+
 
 class JobApplicator:
     """
@@ -92,25 +81,33 @@ class JobApplicator:
         while True:
             step_count += 1
             if step_count > MAX_STEPS_PER_APPLICATION:
-                raise JobApplyError(f"Exceeded {MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop.")
+                raise JobApplyError(
+                    f"Exceeded {MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
+                )
 
             payload = self.parser.parse_form_fields()
 
             if payload:
                 items = self._prepare_items_with_embeddings(payload)
-                self._hydrate_answers_from_history(items, threshold=SIMILARITY_THRESHOLD)
+                self._hydrate_answers_from_history(
+                    items, threshold=SIMILARITY_THRESHOLD
+                )
                 ai_answers = self._generate_ai_answers_for_unanswered(items)
                 # Merge AI answers into items
                 self._merge_ai_answers(items, ai_answers)
 
                 # Fill and persist
-                fields = self.filler.fill_fields(payload, items)  # expects items as answers with labels
+                fields = self.filler.fill_fields(
+                    payload, items
+                )  # expects items as answers with labels
                 self._persist_filled_fields(fields, job_id)
 
             # Early surface of form-level errors
             if self._has_error_icon():
                 self._close_and_discard()
-                raise FormFillError("Encountered an error while filling the form (error icon present).")
+                raise FormFillError(
+                    "Couldn't fill out the form."
+                )
 
             # Submit if ready
             if self._submit_if_ready(job_id):
@@ -123,7 +120,9 @@ class JobApplicator:
             # If neither submit nor next-step is available and no payload, we may be stuck.
             # Fail fast with a helpful message.
             if not payload:
-                raise JobApplyError("No form payload and cannot advance; the flow may be in an unexpected state.")
+                raise JobApplyError(
+                    "No form payload and cannot advance; the flow may be in an unexpected state."
+                )
 
     # Click & navigation helpers ----------------------------------------------
 
@@ -132,7 +131,9 @@ class JobApplicator:
             self.driver.find_element(By.ID, APPLY_BTN_ID).click()
             wait_until_page_loaded(self.driver, APPLY_BTN_ID)
         except Exception as exc:
-            raise ApplyButtonNotFound("Couldn't find or click the apply button.") from exc
+            raise ApplyButtonNotFound(
+                "Couldn't find or click the apply button."
+            ) from exc
 
     def _next_step(self) -> bool:
         """
@@ -171,33 +172,35 @@ class JobApplicator:
 
     # Data/DB helpers ----------------------------------------------------------
 
-    def _persist_filled_fields(self, fields: List[Dict], job_id: int) -> None:
+    def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: int) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
         """
         for field in fields:
-            embeddings = AIService.get_embedding(field["label"])
+            embeddings = AIService.get_embedding(field.label)
             self.db.save_field(
-                label=field["label"],
-                value=field["value"],
-                type=field["type"],
+                label=field.label,
+                value=field.answer,
+                type=field.type,
                 embeddings=embeddings,
                 job_id=job_id,
             )
 
     # Answer pipeline ----------------------------------------------------------
 
-    def _prepare_items_with_embeddings(self, payload: List[Dict[str, str]]) -> List[FormItem]:
+    def _prepare_items_with_embeddings(
+        self, payload: List[Dict[str, str]]
+    ) -> List[FormItemSchema]:
         """
-        Takes raw parsed payload -> FormItem list, computes and attaches embeddings (float32 bytes).
+        Takes raw parsed payload -> FormItemSchema list, computes and attaches embeddings (float32 bytes).
         """
-        items = [FormItem.from_payload_entry(p) for p in payload]
+        items = [FormItemSchema.from_payload_entry(p) for p in payload]
         for item in items:
             emb = AIService.get_embedding(item.label)
             item.embeddings = np.asarray(emb, dtype=np.float32).tobytes()
         return items
 
-    def _hydrate_answers_from_history(self, items: List[FormItem], threshold: float) -> None:
+    def _hydrate_answers_from_history(self, items: List["FormItemSchema"], threshold: float) -> None:
         """
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
@@ -207,37 +210,47 @@ class JobApplicator:
         if not historical or not items:
             return
 
-        # Build matrices: query (n x d) and historical (m x d)
-        q_mat = _stack_embeddings([i.embeddings for i in items])        # (n, d)
-        h_mat = _stack_embeddings([f.embedding for f in historical])    # (m, d)
+        # Build matrices: query (n x d) and historical (m x d), keeping row indices
+        q_mat, kept_q = _stack_embeddings([i.embeddings for i in items])       # (n, d)
+        h_mat, kept_h = _stack_embeddings([f.embedding for f in historical])   # (m, d)
 
         if q_mat.size == 0 or h_mat.size == 0:
             return
 
         # Cosine similarity matrix (n x m)
-        sim = _cosine_similarity_matrix(q_mat, h_mat)  # values in [-1, 1], we expect non-negative if embeddings are normalized upstream
+        sim = _cosine_similarity_matrix(q_mat, h_mat)  # values in [-1, 1]
 
         # For each query, take best historical match
-        best_idx = sim.argmax(axis=1)
-        best_scores = sim[np.arange(sim.shape[0]), best_idx]
+        best_idx = sim.argmax(axis=1)                                  # (n,)
+        best_scores = sim[np.arange(sim.shape[0]), best_idx]           # (n,)
 
-        for i, score in enumerate(best_scores):
+        for row_i, score in enumerate(best_scores):
             if float(score) >= float(threshold):
-                h = historical[int(best_idx[i])]
-                items[i].answer = h.value
+                # Map back to original indices
+                hist_j = kept_h[int(best_idx[row_i])]
+                item_i = kept_q[row_i]
+                items[item_i].answer = historical[hist_j].value
 
-    def _generate_ai_answers_for_unanswered(self, items: List[FormItem]) -> List[Dict[str, str]]:
+    def _generate_ai_answers_for_unanswered(
+        self, items: List[FormItemSchema]
+    ) -> List[Dict[str, str]]:
         """
         Calls AI service for only unanswered items. Returns AI-produced answers
         as a list of dicts with keys: label, answer, embeddings (optional).
         """
-        unanswered = [ {"label": i.label, "answer": "", "embeddings": i.embeddings} for i in items if not i.answer ]
+        unanswered = [
+            {"label": i.label, "answer": ""}
+            for i in items
+            if not i.answer
+        ]
         if not unanswered:
             return []
         return AIService.ask_form_answers(unanswered)
 
     @staticmethod
-    def _merge_ai_answers(items: List[FormItem], ai_answers: List[Dict[str, str]]) -> None:
+    def _merge_ai_answers(
+        items: List[FormItemSchema], ai_answers: List[Dict[str, str]]
+    ) -> None:
         """
         Merge AI answers into items in-place by label.
         """
@@ -253,37 +266,71 @@ class JobApplicator:
 # Numeric utilities
 # ---------------------------
 
-def _stack_embeddings(blobs: Iterable[bytes]) -> np.ndarray:
+def _stack_embeddings(blobs: Iterable[bytes]) -> Tuple[np.ndarray, List[int]]:
     """
-    From an iterable of float32 byte blobs -> (N, D) float32 array.
-    Returns empty (0, 0) if no embeddings.
+    From an iterable of float32 byte blobs -> (N, D) float32 array and the list of kept indices.
+
+    Returns:
+        (array, kept_indices)
+        - array: shape (N, D), dtype float32. Empty (0, 0) if no valid embeddings.
+        - kept_indices: indices (into the input iterable order) of rows that were kept.
     """
-    arrays: List[np.ndarray] = []
-    for b in blobs:
+    arrays: List[Tuple[int, np.ndarray]] = []
+    for idx, b in enumerate(blobs):
+        # Tolerate None/missing blobs
+        if b is None:
+            continue
         arr = np.frombuffer(b, dtype=np.float32)
-        arrays.append(arr)
+        arrays.append((idx, arr))
+
     if not arrays:
-        return np.empty((0, 0), dtype=np.float32)
+        return np.empty((0, 0), dtype=np.float32), []
+
     # Validate consistent dimensionality; if not, skip mismatched rows.
-    dim = arrays[0].shape[0]
-    filtered = [a for a in arrays if a.shape[0] == dim]
+    dim = arrays[0][1].shape[0]
+    filtered = [(idx, a) for idx, a in arrays if a.shape[0] == dim]
+
     if not filtered:
-        return np.empty((0, 0), dtype=np.float32)
-    return np.vstack(filtered).astype(np.float32, copy=False)
+        return np.empty((0, 0), dtype=np.float32), []
+
+    kept_idx, mats = zip(*filtered)
+    mat = np.vstack(mats).astype(np.float32, copy=False)
+    return mat, list(kept_idx)
 
 
-def _cosine_similarity_matrix(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+def _cosine_similarity_matrix(
+        A: np.ndarray, B: np.ndarray, *, out_dtype=np.float32, eps: float = 1e-12
+) -> np.ndarray:
     """
-    Computes pairwise cosine similarity between rows of A (n x d) and B (m x d) -> (n x m).
-    Handles zero vectors safely (returns 0 similarity for those rows).
+    Pairwise cosine similarity between rows of A (n x d) and B (m x d) -> (n x m).
+    - Safe for zero or near-zero vectors (treated as all-zeros => similarity 0).
+    - Robust to int inputs and NaN/Inf values.
+    - Numerically stable (uses float64 inside).
     """
-    # Normalize rows
+    # Normalize inputs to float64 for stability
+    A = np.asarray(A, dtype=np.float64)
+    B = np.asarray(B, dtype=np.float64)
+
+    # Replace NaN/Inf with finite numbers
+    A = np.nan_to_num(A, nan=0.0, posinf=0.0, neginf=0.0)
+    B = np.nan_to_num(B, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # Row norms (n,1) and (m,1)
     A_norms = np.linalg.norm(A, axis=1, keepdims=True)
     B_norms = np.linalg.norm(B, axis=1, keepdims=True)
 
-    # Prevent division by zero
-    A_safe = np.divide(A, A_norms, out=np.zeros_like(A), where=(A_norms != 0))
-    B_safe = np.divide(B, B_norms, out=np.zeros_like(B), where=(B_norms != 0))
+    # Use np.divide with where to avoid boolean-indexing/broadcasting pitfalls.
+    # Unsafe rows (norm <= eps) are set to zero rows.
+    denA = np.where(A_norms > eps, A_norms, 1.0)
+    denB = np.where(B_norms > eps, B_norms, 1.0)
+
+    A_safe = np.divide(A, denA, out=np.zeros_like(A), where=A_norms > eps)
+    B_safe = np.divide(B, denB, out=np.zeros_like(B), where=B_norms > eps)
 
     # Cosine similarity
-    return A_safe @ B_safe.T
+    S = np.dot(A_safe, B_safe.T)
+
+    # Clip to [-1, 1] (protects against tiny numerical spillover)
+    np.clip(S, -1.0, 1.0, out=S)
+
+    return S.astype(out_dtype, copy=False)

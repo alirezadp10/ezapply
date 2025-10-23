@@ -19,11 +19,14 @@ class LinkedInAuth:
             logger.info("✅ Already logged in.")
             return
 
-        self.driver.find_element(By.NAME, "session_key").send_keys(settings.LINKEDIN_USERNAME)
+        if self.driver.find_element(By.NAME, "session_key").get_attribute("type") != 'hidden':
+            self.driver.find_element(By.NAME, "session_key").send_keys(settings.LINKEDIN_USERNAME)
+
         self.driver.find_element(By.NAME, "session_password").send_keys(settings.LINKEDIN_PASSWORD)
+
         self.driver.find_element(By.CSS_SELECTOR, '[data-litms-control-urn="login-submit"]').click()
 
-        wait_until_page_loaded(self.driver, f'[data-litms-control-urn="login-submit"]')
+        wait_until_page_loaded(self.driver, '[data-litms-control-urn="login-submit"]')
 
         time.sleep(settings.DELAY_TIME)
         logger.info("✅ Login successful.")

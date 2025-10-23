@@ -71,7 +71,7 @@ class AIService:
     # ---------- Public API ----------
 
     @staticmethod
-    def ask_form_answers(labels: Dict[str, Any]) -> List[Any]:
+    def ask_form_answers(labels: List[Dict[str, Any]]) -> List[Any]:
         body = {
             "model": settings.DEEPINFRA_MODEL_NAME,
             "messages": [
