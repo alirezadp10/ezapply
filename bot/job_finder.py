@@ -2,7 +2,7 @@ import time
 from typing import Optional
 
 from selenium.webdriver.common.by import By
-from bot.enums import WorkTypes
+from bot.enums import WorkTypesEnum
 from bot.config import settings
 
 class JobFinder:
@@ -26,7 +26,7 @@ class JobFinder:
             params["geoId"] = country_id
 
         params["f_TPR"] = f"r{settings.JOB_SEARCH_TIME_WINDOW}"
-        params["f_WT"] = WorkTypes(settings.WORK_TYPE)
+        params["f_WT"] = WorkTypesEnum(settings.WORK_TYPE)
 
         query = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
 
