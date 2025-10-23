@@ -7,7 +7,7 @@ from bot.dto import FormItemDTO
 
 
 class EmbeddingManager:
-    def handle(
+    def fill_out_items(
         self, items: List["FormItemDTO"], historical: list
     ) -> None:
         """

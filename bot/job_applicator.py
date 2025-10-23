@@ -177,7 +177,7 @@ class JobApplicator:
         if not historical or not items:
             return
 
-        self.embedding_manager.handle(items, historical)
+        self.embedding_manager.fill_out_items(items, historical)
 
     def _generate_ai_answers_for_unanswered(
         self, items: List[FormItemDTO]
