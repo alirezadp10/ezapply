@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, List, Set
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from bot.dto import FormItemDTO
@@ -20,7 +20,7 @@ class FormFiller:
     # -----------------------------
     def fill_fields(self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemDTO]) -> List[FormItemDTO]:
         """
-        Fill a collection of form fields using (label -> answer) pairs.
+        Fill collection of form fields using (label -> answer) pairs.
 
         Returns a list of {"label": str, "value": Any, "type": str} rows describing what was attempted.
         """
@@ -145,7 +145,7 @@ class FormFiller:
 
             self._scroll_into_view(label)
             try:
-                self.wait.until(EC.element_to_be_clickable(label)).click()
+                self.wait.until(ec.element_to_be_clickable(label)).click()
             except (ElementClickInterceptedException, TimeoutException):
                 self.driver.execute_script("arguments[0].click();", label)
             return True
@@ -160,7 +160,7 @@ class FormFiller:
                     return True
                 try:
                     self._scroll_into_view(r)
-                    self.wait.until(EC.element_to_be_clickable(r)).click()
+                    self.wait.until(ec.element_to_be_clickable(r)).click()
                 except (ElementClickInterceptedException, TimeoutException):
                     try:
                         self.driver.execute_script("arguments[0].click();", r)
@@ -185,7 +185,7 @@ class FormFiller:
                 label = labels[rid][0]
                 self._scroll_into_view(label)
                 try:
-                    self.wait.until(EC.element_to_be_clickable(label)).click()
+                    self.wait.until(ec.element_to_be_clickable(label)).click()
                 except (ElementClickInterceptedException, TimeoutException):
                     self.driver.execute_script("arguments[0].click();", label)
                 return True
@@ -197,7 +197,7 @@ class FormFiller:
                 label = labels[rid][0]
                 self._scroll_into_view(label)
                 try:
-                    self.wait.until(EC.element_to_be_clickable(label)).click()
+                    self.wait.until(ec.element_to_be_clickable(label)).click()
                 except (ElementClickInterceptedException, TimeoutException):
                     self.driver.execute_script("arguments[0].click();", label)
                 return True
@@ -224,7 +224,7 @@ class FormFiller:
             label_el = labels[rid][0]
             self._scroll_into_view(label_el)
             try:
-                self.wait.until(EC.element_to_be_clickable(label_el)).click()
+                self.wait.until(ec.element_to_be_clickable(label_el)).click()
             except (ElementClickInterceptedException, TimeoutException):
                 self.driver.execute_script("arguments[0].click();", label_el)
             return True
@@ -261,7 +261,7 @@ class FormFiller:
                     if not click_label_for(cb):
                         self._scroll_into_view(cb)
                         try:
-                            self.wait.until(EC.element_to_be_clickable(cb)).click()
+                            self.wait.until(ec.element_to_be_clickable(cb)).click()
                         except (ElementClickInterceptedException, TimeoutException):
                             self.driver.execute_script("arguments[0].click();", cb)
                     changed = True
@@ -282,7 +282,7 @@ class FormFiller:
                     if not click_label_for(cb):
                         self._scroll_into_view(cb)
                         try:
-                            self.wait.until(EC.element_to_be_clickable(cb)).click()
+                            self.wait.until(ec.element_to_be_clickable(cb)).click()
                         except (ElementClickInterceptedException, TimeoutException):
                             self.driver.execute_script("arguments[0].click();", cb)
                     changed = True
@@ -293,7 +293,7 @@ class FormFiller:
     # Utilities
     # -----------------------------
     def _wait_present_by_id(self, element_id: str) -> WebElement:
-        return self.wait.until(EC.presence_of_element_located((By.ID, element_id)))
+        return self.wait.until(ec.presence_of_element_located((By.ID, element_id)))
 
     def _scroll_into_view(self, el: WebElement) -> None:
         self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)

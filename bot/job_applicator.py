@@ -7,41 +7,13 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 
 from bot.ai_service import AIService
+from bot.config import settings
 from bot.enums import ElementsEnum
+from bot.exceptions import JobApplyError, FormFillError, ApplyButtonNotFound
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
 from bot.utils import wait_until_page_loaded
-
-
-
-# Similarity must be in [0, 1]. 0.95 was in original code; keep as default but make it tunable.
-SIMILARITY_THRESHOLD = 0.95
-
-# Defensive programming: cap the number of steps to avoid infinite loops due to site quirks
-MAX_STEPS_PER_APPLICATION = 30
-
-# ---------------------------
-# Exceptions
-# ---------------------------
-
-
-class JobApplyError(RuntimeError):
-    """Base exception for job application flow errors."""
-
-
-class ApplyButtonNotFound(JobApplyError):
-    """Raised when the initial apply button cannot be found/clicked."""
-
-
-class FormFillError(JobApplyError):
-    """Raised when we detect an error pebble during form filling."""
-
-
-# ---------------------------
-# Main service
-# ---------------------------
-
 
 class JobApplicator:
     """
@@ -69,9 +41,9 @@ class JobApplicator:
         step_count = 0
         while True:
             step_count += 1
-            if step_count > MAX_STEPS_PER_APPLICATION:
+            if step_count > settings.MAX_STEPS_PER_APPLICATION:
                 raise JobApplyError(
-                    f"Exceeded {MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
+                    f"Exceeded {settings.MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
                 )
 
             payload = self.parser.parse_form_fields()
@@ -79,7 +51,7 @@ class JobApplicator:
             if payload:
                 items = self._prepare_items_with_embeddings(payload)
                 self._hydrate_answers_from_history(
-                    items, threshold=SIMILARITY_THRESHOLD
+                    items, threshold=settings.SIMILARITY_THRESHOLD
                 )
                 ai_answers = self._generate_ai_answers_for_unanswered(items)
                 # Merge AI answers into items
