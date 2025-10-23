@@ -7,7 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
-from bot.schemas import FormItemSchema
+from bot.dto import FormItemDTO
 
 
 class FormFiller:
@@ -18,13 +18,13 @@ class FormFiller:
     # -----------------------------
     # Public API
     # -----------------------------
-    def fill_fields(self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemSchema]) -> List[FormItemSchema]:
+    def fill_fields(self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemDTO]) -> List[FormItemDTO]:
         """
         Fill a collection of form fields using (label -> answer) pairs.
 
         Returns a list of {"label": str, "value": Any, "type": str} rows describing what was attempted.
         """
-        result: List[FormItemSchema] = []
+        result: List[FormItemDTO] = []
         answer_map = {str(a.label): a.answer for a in answers}
 
         for item in fields:
@@ -36,7 +36,7 @@ class FormFiller:
             inferred_type = self._infer_type(el)
             answer = answer_map.get(label)
 
-            result.append(FormItemSchema(label=label,answer=answer,type=inferred_type))
+            result.append(FormItemDTO(label=label,answer=answer,type=inferred_type))
 
             # Skip if no provided answer, but still report in result
             if answer in (None, ""):

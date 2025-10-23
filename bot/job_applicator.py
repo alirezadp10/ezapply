@@ -10,7 +10,7 @@ from bot.ai_service import AIService
 from bot.enums import ElementsEnum
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
-from bot.schemas import FormItemSchema
+from bot.dto import FormItemDTO
 from bot.utils import wait_until_page_loaded
 
 
@@ -159,7 +159,7 @@ class JobApplicator:
 
     # Data/DB helpers ----------------------------------------------------------
 
-    def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: str) -> None:
+    def _persist_filled_fields(self, fields: List[FormItemDTO], job_id: str) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
         """
@@ -177,17 +177,17 @@ class JobApplicator:
 
     def _prepare_items_with_embeddings(
         self, payload: List[Dict[str, str]]
-    ) -> List[FormItemSchema]:
+    ) -> List[FormItemDTO]:
         """
-        Takes raw parsed payload -> FormItemSchema list, computes and attaches embeddings (float32 bytes).
+        Takes raw parsed payload -> FormItemDTO list, computes and attaches embeddings (float32 bytes).
         """
-        items = [FormItemSchema.from_payload_entry(p) for p in payload]
+        items = [FormItemDTO.from_payload_entry(p) for p in payload]
         for item in items:
             emb = AIService.get_embedding(item.label)
             item.embeddings = np.asarray(emb, dtype=np.float32).tobytes()
         return items
 
-    def _hydrate_answers_from_history(self, items: List["FormItemSchema"], threshold: float) -> None:
+    def _hydrate_answers_from_history(self, items: List["FormItemDTO"], threshold: float) -> None:
         """
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
@@ -219,7 +219,7 @@ class JobApplicator:
                 items[item_i].answer = historical[hist_j].value
 
     def _generate_ai_answers_for_unanswered(
-        self, items: List[FormItemSchema]
+        self, items: List[FormItemDTO]
     ) -> List[Dict[str, str]]:
         """
         Calls AI service for only unanswered items. Returns AI-produced answers
@@ -236,7 +236,7 @@ class JobApplicator:
 
     @staticmethod
     def _merge_ai_answers(
-        items: List[FormItemSchema], ai_answers: List[Dict[str, str]]
+        items: List[FormItemDTO], ai_answers: List[Dict[str, str]]
     ) -> None:
         """
         Merge AI answers into items in-place by label.
