@@ -10,7 +10,7 @@ class JobFinder:
         self.driver = driver
         self.db = db
 
-    def build_job_url(self, keyword: Optional[str] = None, country_id: Optional[int] = None, job_id: Optional[int] = None) -> str:
+    def build_job_url(self, keyword: Optional[str] = None, country_id: Optional[str] = None, job_id: Optional[str] = None) -> str:
         base_url = settings.LINKEDIN_BASE_URL
 
         if job_id is not None:
@@ -36,10 +36,8 @@ class JobFinder:
         jobs = []
         time.sleep(settings.DELAY_TIME)
         for div in self.driver.find_elements(By.CSS_SELECTOR, 'div[data-job-id]'):
-            job_id_str = div.get_attribute("data-job-id")
-            if not job_id_str or not job_id_str.isdigit():
-                continue
+            job_id = div.get_attribute("data-job-id")
             if "Easy Apply" in div.text:
                 title_el = div.find_element(By.CSS_SELECTOR, '.job-card-list__title--link span[aria-hidden="true"]')
-                jobs.append({'id': int(job_id_str), 'title': title_el.text.strip()})
+                jobs.append({'id': job_id, 'title': title_el.text.strip()})
         return jobs

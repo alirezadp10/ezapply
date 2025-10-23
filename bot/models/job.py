@@ -8,10 +8,10 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255))
-    job_id = Column(Integer)
+    title = Column(String(50))
+    job_id = Column(String(20))
     status = Column(String(10))
     reason = Column(String(255), nullable=True)
-    url = Column(String(255))
+    url = Column(String(50))
     applied_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)

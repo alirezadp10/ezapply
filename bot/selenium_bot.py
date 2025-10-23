@@ -57,7 +57,7 @@ class SeleniumBot:
     # -------------------------
     # Orchestration helpers
     # -------------------------
-    def _run_test_jobs(self, job_ids: Iterable[int]) -> None:
+    def _run_test_jobs(self, job_ids: Iterable[str]) -> None:
         for job_id in job_ids:
             try:
                 url = self.finder.build_job_url(job_id=job_id)
@@ -92,12 +92,11 @@ class SeleniumBot:
             return
 
         for job in jobs:
-            job_id = int(job["id"])
-            if self.db.is_applied_for_job(job_id):
-                logger.debug(f"Already applied to job #{job_id}, skipping.")
+            if self.db.is_applied_for_job(job['id']):
+                logger.debug(f"Already applied to job #{job['id']}, skipping.")
                 continue
 
-            job_url = self.finder.build_job_url(job_id=job_id)
+            job_url = self.finder.build_job_url(job_id=job['id'])
             try:
                 self.driver.get(job_url)
                 time.sleep(settings.DELAY_TIME)
@@ -105,14 +104,14 @@ class SeleniumBot:
                     continue
                 wait_until_page_loaded(
                     self.driver,
-                    f'div[data-job-id="{job_id}"]',
+                    f'div[data-job-id="{job["id"]}"]',
                     wait_for=(By.ID, "jobs-apply-button-id"),
                 )
-                self.applicator.apply_to_job(job_id)
+                self.applicator.apply_to_job(job['id'])
                 self._save_job_result(job, status="applied", base_url=url)
-                logger.success(f"✅ Applied to job #{job_id}: {job.get('title', '(no title)')}")
+                logger.success(f"✅ Applied to job #{job['id']}: {job.get('title', '(no title)')}")
             except Exception as e:
-                logger.error(f"❌ Error applying to job #{job_id}: {e}")
+                logger.error(f"❌ Error applying to job #{job['id']}: {e}")
                 self._save_job_result(job, status="failed", base_url=url, reason=str(e))
 
     # -------------------------
@@ -130,7 +129,7 @@ class SeleniumBot:
                 if "id" not in j:
                     continue
                 normalized.append({
-                    "id": int(j["id"]),
+                    "id": j["id"],
                     "title": j.get("title") or "",
                 })
             return normalized
@@ -146,7 +145,7 @@ class SeleniumBot:
             base_url: str,
             reason: Optional[str] = None,
     ) -> None:
-        job_id = int(job["id"])
+        job_id = job["id"]
         title = job.get("title") or ""
         job_url_with_context = f"{base_url}&currentJobId={job_id}"
         self.db.save_job(

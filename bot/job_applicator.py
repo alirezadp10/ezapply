@@ -7,24 +7,13 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 
 from bot.ai_service import AIService
+from bot.enums import ElementsEnum
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.schemas import FormItemSchema
 from bot.utils import wait_until_page_loaded
 
 
-# ---------------------------
-# Constants & configuration
-# ---------------------------
-
-APPLY_BTN_ID = "jobs-apply-button-id"
-
-SEL_NEXT_STEP = '[aria-label="Continue to next step"]'
-SEL_REVIEW = '[aria-label="Review your application"]'
-SEL_SUBMIT = '[aria-label="Submit application"]'
-SEL_DISMISS = '[aria-label="Dismiss"]'
-SEL_DISCARD = '[data-control-name="discard_application_confirm_btn"]'
-SEL_ERROR_ICON = '[type="error-pebble-icon"]'
 
 # Similarity must be in [0, 1]. 0.95 was in original code; keep as default but make it tunable.
 SIMILARITY_THRESHOLD = 0.95
@@ -56,7 +45,7 @@ class FormFillError(JobApplyError):
 
 class JobApplicator:
     """
-    Orchestrates a multi-step job application flow:
+    Orchestrates a multi_step job application flow:
     - Clicks 'Apply'
     - Iteratively parses current step, finds/creates answers
     - Fills fields and persists them
@@ -71,7 +60,7 @@ class JobApplicator:
 
     # Public API ---------------------------------------------------------------
 
-    def apply_to_job(self, job_id: int) -> bool:
+    def apply_to_job(self, job_id: str):
         """
         Returns True if submitted successfully, otherwise raises JobApplyError.
         """
@@ -105,9 +94,7 @@ class JobApplicator:
             # Early surface of form-level errors
             if self._has_error_icon():
                 self._close_and_discard()
-                raise FormFillError(
-                    "Couldn't fill out the form."
-                )
+                raise FormFillError("Couldn't fill out the form.")
 
             # Submit if ready
             if self._submit_if_ready(job_id):
@@ -128,8 +115,8 @@ class JobApplicator:
 
     def _click_apply_or_fail(self) -> None:
         try:
-            self.driver.find_element(By.ID, APPLY_BTN_ID).click()
-            wait_until_page_loaded(self.driver, APPLY_BTN_ID)
+            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID).click()
+            wait_until_page_loaded(self.driver, ElementsEnum.APPLY_BTN_ID)
         except Exception as exc:
             raise ApplyButtonNotFound(
                 "Couldn't find or click the apply button."
@@ -139,12 +126,12 @@ class JobApplicator:
         """
         Attempts to go to the next step (or review). Returns True if we clicked something.
         """
-        return self._click_if_exists(SEL_NEXT_STEP) or self._click_if_exists(SEL_REVIEW)
+        return self._click_if_exists(ElementsEnum.SEL_NEXT_STEP) or self._click_if_exists(ElementsEnum.SEL_REVIEW)
 
-    def _submit_if_ready(self, job_id: int) -> bool:
-        if self._click_if_exists(SEL_SUBMIT):
+    def _submit_if_ready(self, job_id: str) -> bool:
+        if self._click_if_exists(ElementsEnum.SEL_SUBMIT):
             logger.info(f"✅ Job {job_id} submitted.")
-            self._click_if_exists(SEL_DISMISS)  # best-effort
+            self._click_if_exists(ElementsEnum.SEL_DISMISS)  # best-effort
             return True
         return False
 
@@ -164,15 +151,15 @@ class JobApplicator:
         return False
 
     def _has_error_icon(self) -> bool:
-        return bool(self.driver.find_elements(By.CSS_SELECTOR, SEL_ERROR_ICON))
+        return bool(self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_ERROR_ICON))
 
     def _close_and_discard(self) -> None:
-        self._click_if_exists(SEL_DISMISS)
-        self._click_if_exists(SEL_DISCARD)
+        self._click_if_exists(ElementsEnum.SEL_DISMISS)
+        self._click_if_exists(ElementsEnum.SEL_DISCARD)
 
     # Data/DB helpers ----------------------------------------------------------
 
-    def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: int) -> None:
+    def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: str) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
         """
@@ -220,12 +207,12 @@ class JobApplicator:
         # Cosine similarity matrix (n x m)
         sim = _cosine_similarity_matrix(q_mat, h_mat)  # values in [-1, 1]
 
-        # For each query, take best historical match
+        # For each query, take the best historical match
         best_idx = sim.argmax(axis=1)                                  # (n,)
         best_scores = sim[np.arange(sim.shape[0]), best_idx]           # (n,)
 
         for row_i, score in enumerate(best_scores):
-            if float(score) >= float(threshold):
+            if float(str(score)) >= float(threshold):
                 # Map back to original indices
                 hist_j = kept_h[int(best_idx[row_i])]
                 item_i = kept_q[row_i]
@@ -299,7 +286,7 @@ def _stack_embeddings(blobs: Iterable[bytes]) -> Tuple[np.ndarray, List[int]]:
 
 
 def _cosine_similarity_matrix(
-        A: np.ndarray, B: np.ndarray, *, out_dtype=np.float32, eps: float = 1e-12
+        a: np.ndarray, b: np.ndarray, *, out_dtype=np.float32, eps: float = 1e-12
 ) -> np.ndarray:
     """
     Pairwise cosine similarity between rows of A (n x d) and B (m x d) -> (n x m).
@@ -308,29 +295,29 @@ def _cosine_similarity_matrix(
     - Numerically stable (uses float64 inside).
     """
     # Normalize inputs to float64 for stability
-    A = np.asarray(A, dtype=np.float64)
-    B = np.asarray(B, dtype=np.float64)
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
 
     # Replace NaN/Inf with finite numbers
-    A = np.nan_to_num(A, nan=0.0, posinf=0.0, neginf=0.0)
-    B = np.nan_to_num(B, nan=0.0, posinf=0.0, neginf=0.0)
+    a = np.nan_to_num(a, nan=0.0, posinf=0.0, neginf=0.0)
+    b = np.nan_to_num(b, nan=0.0, posinf=0.0, neginf=0.0)
 
     # Row norms (n,1) and (m,1)
-    A_norms = np.linalg.norm(A, axis=1, keepdims=True)
-    B_norms = np.linalg.norm(B, axis=1, keepdims=True)
+    a_norms = np.linalg.norm(a, axis=1, keepdims=True)
+    b_norms = np.linalg.norm(b, axis=1, keepdims=True)
 
     # Use np.divide with where to avoid boolean-indexing/broadcasting pitfalls.
     # Unsafe rows (norm <= eps) are set to zero rows.
-    denA = np.where(A_norms > eps, A_norms, 1.0)
-    denB = np.where(B_norms > eps, B_norms, 1.0)
+    den_a = np.where(a_norms > eps, a_norms, 1.0)
+    den_b = np.where(b_norms > eps, b_norms, 1.0)
 
-    A_safe = np.divide(A, denA, out=np.zeros_like(A), where=A_norms > eps)
-    B_safe = np.divide(B, denB, out=np.zeros_like(B), where=B_norms > eps)
+    a_safe = np.divide(a, den_a, out=np.zeros_like(a), where=a_norms > eps)
+    b_safe = np.divide(b, den_b, out=np.zeros_like(b), where=b_norms > eps)
 
     # Cosine similarity
-    S = np.dot(A_safe, B_safe.T)
+    s = np.dot(a_safe, b_safe.T)
 
     # Clip to [-1, 1] (protects against tiny numerical spillover)
-    np.clip(S, -1.0, 1.0, out=S)
+    np.clip(s, -1.0, 1.0, out=s)
 
-    return S.astype(out_dtype, copy=False)
+    return s.astype(out_dtype, copy=False)

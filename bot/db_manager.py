@@ -14,14 +14,14 @@ class DBManager:
         self.session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
-    def save_job(self, title: str, job_id: int, status: str, url: str, reason: Optional[str] = None):
+    def save_job(self, title: str, job_id: str, status: str, url: str, reason: Optional[str] = None):
         session = self.session()
         job = Job(title=title, job_id=job_id, status=status, url=url, reason=reason)
         session.add(job)
         session.commit()
         session.close()
 
-    def save_field(self, label: str, value: str, type: str, embeddings: list, job_id: int):
+    def save_field(self, label: str, value: str, type: str, embeddings: list, job_id: str):
         session = self.session()
         try:
             field = session.execute(
@@ -43,7 +43,7 @@ class DBManager:
         finally:
             session.close()
 
-    def is_applied_for_job(self, job_id: int) -> bool:
+    def is_applied_for_job(self, job_id: str) -> bool:
         session = self.session()
         job = session.query(Job).filter_by(job_id=job_id).first()
         session.close()
