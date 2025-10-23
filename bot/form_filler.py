@@ -2,12 +2,17 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Set
 from selenium.webdriver.support.ui import Select, WebDriverWait
-from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    TimeoutException,
+)
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
+
 from bot.dto import FormItemDTO
+from bot.enums import ElementsEnum
 
 
 class FormFiller:
@@ -18,7 +23,9 @@ class FormFiller:
     # -----------------------------
     # Public API
     # -----------------------------
-    def fill_fields(self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemDTO]) -> List[FormItemDTO]:
+    def fill_fields(
+        self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemDTO]
+    ) -> List[FormItemDTO]:
         """
         Fill collection of form fields using (label -> answer) pairs.
 
@@ -36,7 +43,7 @@ class FormFiller:
             inferred_type = self._infer_type(el)
             answer = answer_map.get(label)
 
-            result.append(FormItemDTO(label=label,answer=answer,type=inferred_type))
+            result.append(FormItemDTO(label=label, answer=answer, type=inferred_type))
 
             # Skip if no provided answer, but still report in result
             if answer in (None, ""):
@@ -84,9 +91,11 @@ class FormFiller:
         el.send_keys(str(answer))
 
         # Quirk: close potential role=combobox overlay if present
-        if el.get_attribute("role") == "combobox":
+        if el.get_attribute("role") == ElementsEnum.ATTR_ROLE_COMBOBOX.value:
             try:
-                self.driver.find_element(By.CSS_SELECTOR, '[data-test-modal]').click()
+                self.driver.find_element(
+                    By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value
+                ).click()
             except Exception:
                 pass
 
@@ -105,8 +114,12 @@ class FormFiller:
         el.send_keys(str(answer))
 
     def _handle_fieldset(self, el: WebElement, answer: Any) -> None:
-        has_radio = el.find_elements(By.CSS_SELECTOR, 'input[type="radio"]')
-        has_checkbox = el.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
+        has_radio = el.find_elements(
+            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
+        )
+        has_checkbox = el.find_elements(
+            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
+        )
 
         if has_radio:
             self._click_radio_in_fieldset(el, str(answer))
@@ -116,7 +129,9 @@ class FormFiller:
     def _handle_generic_editable(self, el: WebElement, answer: Any) -> None:
         # Fallback for contenteditable or nested input-like areas
         try:
-            editable = el.find_element(By.CSS_SELECTOR, '[contenteditable="true"]')
+            editable = el.find_element(
+                By.CSS_SELECTOR, ElementsEnum.SEL_CONTENTEDITABLE.value
+            )
             self._scroll_into_view(editable)
             editable.clear()
             editable.send_keys(str(answer))
@@ -131,7 +146,9 @@ class FormFiller:
         if not answer:
             return False
 
-        radios = fieldset.find_elements(By.CSS_SELECTOR, 'input[type="radio"]')
+        radios = fieldset.find_elements(
+            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
+        )
         answer_norm = answer.strip().lower()
 
         def click_via_label(radio: WebElement) -> bool:
@@ -172,7 +189,7 @@ class FormFiller:
         # Build label map once
         labels: Dict[str, tuple[WebElement, str]] = {
             lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
-            for lab in fieldset.find_elements(By.TAG_NAME, "label")
+            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.TAG_LABEL.value)
             if lab.get_attribute("for")
         }
 
@@ -204,16 +221,20 @@ class FormFiller:
 
         return False
 
-    def _set_checkboxes_in_fieldset(self, fieldset: WebElement, answer: Any, unselect_others: bool = False) -> bool:
+    def _set_checkboxes_in_fieldset(
+        self, fieldset: WebElement, answer: Any, unselect_others: bool = False
+    ) -> bool:
         if answer is None or str(answer).strip() == "":
             return False
 
         desired = self._normalize_multi_answer(answer)
-        checkboxes = fieldset.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
+        checkboxes = fieldset.find_elements(
+            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
+        )
 
         labels: Dict[str, tuple[WebElement, str]] = {
             lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
-            for lab in fieldset.find_elements(By.TAG_NAME, "label")
+            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.TAG_LABEL.value)
             if lab.get_attribute("for")
         }
 
@@ -246,7 +267,9 @@ class FormFiller:
 
         # Ensure desired are checked (value -> exact label -> contains in label)
         for want in desired:
-            candidates = by_value.get(want, []) or by_label_text.get(want, [])
+            candidates = list(by_value.get(want, [])) or list(
+                by_label_text.get(want, [])
+            )
             if not candidates:
                 for label_txt, cbs in by_label_text.items():
                     if want in label_txt:
@@ -274,9 +297,9 @@ class FormFiller:
                 label_txt = labels.get(rid, (None, ""))[1] if rid in labels else ""
 
                 is_desired = (
-                        (val in desired)
-                        or (label_txt in desired)
-                        or any(w in label_txt for w in desired if len(w) >= 3)
+                    (val in desired)
+                    or (label_txt in desired)
+                    or any(w in label_txt for w in desired if len(w) >= 3)
                 )
                 if cb.is_selected() and not is_desired:
                     if not click_label_for(cb):
@@ -316,8 +339,10 @@ class FormFiller:
         inferred_type = input_type_attr or tag
 
         if tag == "fieldset":
-            if el.find_elements(By.CSS_SELECTOR, 'input[type="radio"]'):
+            if el.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value):
                 inferred_type = "radio"
-            elif el.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]'):
+            elif el.find_elements(
+                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
+            ):
                 inferred_type = "checkbox-group"
         return inferred_type

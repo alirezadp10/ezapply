@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 import re
+from bot.enums import ElementsEnum
 
 
 class FormParser:
@@ -8,16 +9,27 @@ class FormParser:
 
     def parse_form_fields(self):
         """Parse visible and enabled input, select, textarea, checkbox, and radio fields from the modal form."""
-        modal = self.driver.find_element(By.CSS_SELECTOR, 'div[data-test-modal]')
-        form = next(iter(modal.find_elements(By.TAG_NAME, "form")), None)
+        modal = self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value)
+        form = next(
+            iter(modal.find_elements(By.TAG_NAME, ElementsEnum.TAG_FORM.value)), None
+        )
         if not form:
             return []
 
-        fields = (self._extract_fields(form, 'input:not([type="radio"])', self._should_include_input)
-                  + self._extract_fields(form, 'select', self._should_include_select, include_options=True)
-                  + self.extract_textareas(form)
-                  + self.extract_checkboxes(form)
-                  + self._extract_radios(form))
+        fields = (
+            self._extract_fields(
+                form, ElementsEnum.SEL_INPUT_NOT_RADIO.value, self._should_include_input
+            )
+            + self._extract_fields(
+                form,
+                ElementsEnum.SEL_SELECT.value,
+                self._should_include_select,
+                include_options=True,
+            )
+            + self.extract_textareas(form)
+            + self.extract_checkboxes(form)
+            + self._extract_radios(form)
+        )
 
         return fields
 
@@ -36,7 +48,13 @@ class FormParser:
             label = self._get_label(form, field_id)
 
             if include_options:
-                options = [opt.text.strip() for opt in el.find_elements(By.TAG_NAME, "option") if opt.text.strip()]
+                options = [
+                    opt.text.strip()
+                    for opt in el.find_elements(
+                        By.TAG_NAME, ElementsEnum.TAG_OPTION.value
+                    )
+                    if opt.text.strip()
+                ]
                 if options:
                     label = f"{label} ({', '.join(options)})"
 
@@ -50,7 +68,7 @@ class FormParser:
     def extract_textareas(self, form):
         """Extracts visible and enabled multiline text fields."""
         results = []
-        for el in form.find_elements(By.CSS_SELECTOR, "textarea"):
+        for el in form.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_TEXTAREA.value):
             if not (el.is_displayed() and el.is_enabled()):
                 continue
             if el.get_attribute("value"):
@@ -65,18 +83,22 @@ class FormParser:
         return results
 
     # ---------------------------
-    # New: Checkbox (multi-select) extraction
+    # Checkbox (multi-select) extraction
     # ---------------------------
 
     def extract_checkboxes(self, form):
         """Extracts multiple-choice checkbox groups (e.g., LinkedIn Easy Apply multi-select questions)."""
         results = []
         # Fieldsets with checkboxes — commonly identified by data-test-checkbox-form-component
-        for fs in form.find_elements(By.CSS_SELECTOR, 'fieldset[data-test-checkbox-form-component="true"]'):
+        for fs in form.find_elements(
+            By.CSS_SELECTOR, ElementsEnum.SEL_FIELDSET_CHECKBOX_COMPONENT.value
+        ):
             if not fs.is_displayed():
                 continue
 
-            checkboxes = fs.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
+            checkboxes = fs.find_elements(
+                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
+            )
             if not checkboxes:
                 continue
 
@@ -89,7 +111,10 @@ class FormParser:
                 if not (cb.is_displayed() and cb.is_enabled()):
                     continue
                 try:
-                    label_el = fs.find_element(By.CSS_SELECTOR, f'label[for="{cb.get_attribute("id")}"]')
+                    sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(
+                        id=cb.get_attribute("id")
+                    )
+                    label_el = fs.find_element(By.CSS_SELECTOR, sel)
                     if label_el.text.strip():
                         options.append(label_el.text.strip())
                 except Exception:
@@ -98,10 +123,12 @@ class FormParser:
             if options:
                 label = f"{label} ({', '.join(options)})"
 
-            results.append({
-                "id": fs.get_attribute("id"),
-                "label": label,
-            })
+            results.append(
+                {
+                    "id": fs.get_attribute("id"),
+                    "label": label,
+                }
+            )
         return results
 
     # ---------------------------
@@ -124,11 +151,13 @@ class FormParser:
     def _extract_radios(self, form):
         """Extract radio button fieldsets and their labels/options."""
         results = []
-        for fs in form.find_elements(By.CSS_SELECTOR, 'fieldset'):
+        for fs in form.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_FIELDSET.value):
             if not fs.is_displayed():
                 continue
 
-            radios = fs.find_elements(By.CSS_SELECTOR, 'input[type="radio"]')
+            radios = fs.find_elements(
+                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
+            )
             if not radios:
                 continue
 
@@ -138,19 +167,29 @@ class FormParser:
             if options:
                 label = f"{label} ({', '.join(options)})"
 
-            results.append({
-                "id": fs.get_attribute("id"),
-                "label": label,
-            })
+            results.append(
+                {
+                    "id": fs.get_attribute("id"),
+                    "label": label,
+                }
+            )
         return results
 
     def _extract_legend_text(self, fieldset):
-        """Extract and clean text from <legend> or its inner span."""
+        """Extract and clean text from <legend> or its inner span(s)."""
         try:
-            legend = fieldset.find_element(By.TAG_NAME, "legend").text
+            legend = fieldset.find_element(
+                By.TAG_NAME, ElementsEnum.TAG_LEGEND.value
+            ).text
             if not legend.strip():
                 # LinkedIn sometimes hides text in <span> elements
-                legend = " ".join(span.text for span in fieldset.find_elements(By.TAG_NAME, "span") if span.text.strip())
+                legend = " ".join(
+                    span.text
+                    for span in fieldset.find_elements(
+                        By.TAG_NAME, ElementsEnum.TAG_SPAN.value
+                    )
+                    if span.text.strip()
+                )
         except Exception:
             legend = ""
         return self.clean_label_text(legend)
@@ -162,7 +201,10 @@ class FormParser:
             if not (radio.is_displayed() and radio.is_enabled()):
                 continue
             try:
-                label_el = fieldset.find_element(By.CSS_SELECTOR, f'label[for="{radio.get_attribute("id")}"]')
+                sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(
+                    id=radio.get_attribute("id")
+                )
+                label_el = fieldset.find_element(By.CSS_SELECTOR, sel)
                 if label_el.text.strip():
                     options.append(label_el.text.strip())
             except Exception:
@@ -176,7 +218,8 @@ class FormParser:
     def _get_label(self, form, field_id):
         """Get label text by field ID and clean it."""
         try:
-            text = form.find_element(By.CSS_SELECTOR, f'label[for="{field_id}"]').text
+            sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(id=field_id)
+            text = form.find_element(By.CSS_SELECTOR, sel).text
         except Exception:
             text = ""
         return self.clean_label_text(text)
@@ -187,11 +230,11 @@ class FormParser:
         text = re.sub(r"\s+", " ", text.strip())
 
         # Deduplicate immediate phrase repetition
-        text = re.sub(r'(?i)(?<!\S)(.+?)(?:\s+\1)+(?!\S)', r'\1', text)
+        text = re.sub(r"(?i)(?<!\S)(.+?)(?:\s+\1)+(?!\S)", r"\1", text)
 
         # Deduplicate repeated sentences or fragments
         seen, unique_parts = set(), []
-        for part in re.split(r'(?<=[.?!])\s+|\n+', text):
+        for part in re.split(r"(?<=[.?!])\s+|\n+", text):
             cleaned = part.strip()
             key = cleaned.lower()
             if cleaned and key not in seen:
