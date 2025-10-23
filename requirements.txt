@@ -10,5 +10,4 @@ python-dotenv==1.1.1
 ruff==0.14.1
 sqlite-utils==3.38
 sqlite-vss==0.1.2
-openai==2.6.0
-numpy==2.3.4
+numpy==2.0.2
