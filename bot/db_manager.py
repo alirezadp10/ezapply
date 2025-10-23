@@ -2,6 +2,7 @@ from typing import Optional
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
+
 from bot.models import Job, Base, Field
 from sqlalchemy.exc import IntegrityError
 import numpy as np
@@ -49,3 +50,9 @@ class DBManager:
         if job:
             return True
         return False
+
+    def get_all_fields(self) -> list:
+        session = self.session()
+        fields = session.query(Field).all()
+        session.close()
+        return fields
