@@ -1,13 +1,77 @@
 import json
 import re
+from typing import Any, Dict, List, Optional
+
 import requests
 from loguru import logger
 from bot.config import settings
 
 
 class AIService:
+    """Service wrapper around DeepInfra endpoints with consistent error handling."""
+
+    _TIMEOUT_DEFAULT = 60
+    _SESSION: Optional[requests.Session] = None
+
+    # ---------- Internal utilities ----------
+
+    @classmethod
+    def _session(cls) -> requests.Session:
+        if cls._SESSION is None:
+            cls._SESSION = requests.Session()
+            cls._SESSION.headers.update({"Content-Type": "application/json"})
+        return cls._SESSION
+
     @staticmethod
-    def ask_form_answers(labels):
+    def _auth_headers() -> Dict[str, str]:
+        return {"Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}"}
+
+    @classmethod
+    def _post_json(
+        cls,
+        url: str,
+        payload: Dict[str, Any],
+        timeout: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """POST JSON and return parsed JSON (or empty dict on error)."""
+        try:
+            resp = cls._session().post(
+                url,
+                headers=cls._auth_headers(),
+                json=payload,
+                timeout=timeout or cls._TIMEOUT_DEFAULT,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.warning(f"⚠️ POST {url} failed: {e}")
+            return {}
+
+    @staticmethod
+    def _extract_json_array(text: str) -> List[Any]:
+        """
+        Attempt to extract the first JSON array from `text`.
+        Falls back to removing newlines if initial parse fails.
+        """
+        match = re.search(r"\[.*]", text, re.DOTALL)
+        if not match:
+            return []
+        candidate = match.group(0)
+
+        try:
+            return json.loads(candidate)
+        except Exception:
+            # remove line breaks and retry
+            cleaned = re.sub(r"[\r\n]", "", candidate)
+            try:
+                return json.loads(cleaned)
+            except Exception:
+                return []
+
+    # ---------- Public API ----------
+
+    @staticmethod
+    def ask_form_answers(labels: Dict[str, Any]) -> List[Any]:
         body = {
             "model": settings.DEEPINFRA_MODEL_NAME,
             "messages": [
@@ -24,20 +88,9 @@ class AIService:
             ],
         }
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
-        }
-
-        try:
-            res = requests.post(
-                settings.DEEPINFRA_API_URL, headers=headers, json=body, timeout=60
-            ).json()
-            content = res.get("choices", [{}])[0].get("message", {}).get("content", "")
-            return AIService._extract_json_array(content)
-        except Exception as e:
-            logger.warning(f"⚠️ AI request failed: {e}")
-            return []
+        res = AIService._post_json(settings.DEEPINFRA_API_URL, body)
+        content = res.get("choices", [{}])[0].get("message", {}).get("content", "")
+        return AIService._extract_json_array(content)
 
     @staticmethod
     def is_relevant_job(title: str) -> bool:
@@ -50,52 +103,29 @@ class AIService:
                 }
             ],
         }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
-        }
 
+        res = AIService._post_json(settings.DEEPINFRA_API_URL, body)
+        content = res.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        return (content or "").strip().lower() == "yes"
+
+    @staticmethod
+    def get_embedding(text: str) -> List[float]:
         try:
-            res = requests.post(
-                settings.DEEPINFRA_API_URL, headers=headers, json=body, timeout=60
-            ).json()
-            content = (
-                res.get("choices", [{}])[0]
-                .get("message", {})
-                .get("content", "")
-                .strip()
-                .lower()
+            resp = AIService._session().post(
+                settings.DEEPINFRA_EMBEDDING_API_URL,
+                headers={
+                    **AIService._auth_headers(),
+                    "Content-Type": "application/json",
+                },
+                json={"inputs": [text]},
+                timeout=AIService._TIMEOUT_DEFAULT,
             )
-            return content == "yes"
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("embeddings", [])
         except Exception as e:
-            logger.warning(f"⚠️ AI relevance check failed: {e}")
-            return False
-
-    @staticmethod
-    def _extract_json_array(text: str):
-        match = re.search(r"\[.*]", text, re.DOTALL)
-        if not match:
+            logger.warning(f"⚠️ Embedding request failed: {e}")
+            # Preserve original behavior of raising on HTTP error was present,
+            # but we prefer to degrade gracefully here returning an empty list.
             return []
-        try:
-            return json.loads(match.group(0))
-        except Exception:
-            cleaned = re.sub(r"[\r\n]", "", match.group(0))
-            try:
-                return json.loads(cleaned)
-            except Exception:
-                return []
-
-    @staticmethod
-    def get_embedding(text: str) -> list:
-        resp = requests.post(
-            settings.DEEPINFRA_EMBEDDING_API_URL,
-            headers={
-                "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "inputs": [text],
-            },
-        )
-        resp.raise_for_status()
-        return resp.json()["embeddings"]
