@@ -63,13 +63,12 @@ class SeleniumBot:
                 url = self.finder.build_job_url(job_id=job_id)
                 self.driver.get(url)
                 time.sleep(settings.DELAY_TIME)
-                if self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]'):
+                if self._has_expired():
                     continue
                 wait_until_page_loaded(self.driver, url, wait_for=(By.ID, "jobs-apply-button-id"))
-                logger.info(f"Applying to test job #{job_id}")
                 self.applicator.apply_to_job(job_id)
             except Exception as e:
-                logger.error(str(e))
+                logger.error(f"❌ Error applying to job #{job_id}: {e}")
 
     def _process_country_keyword(self, country: str, keyword: str) -> None:
         """
@@ -100,8 +99,12 @@ class SeleniumBot:
             try:
                 self.driver.get(job_url)
                 time.sleep(settings.DELAY_TIME)
-                if self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]'):
+                if self._has_expired():
                     continue
+                if self._has_exhausted_limitation():
+                    logger.error("❌ Daily application limit reached. Stopping further applications for today.")
+                    continue
+
                 wait_until_page_loaded(
                     self.driver,
                     f'div[data-job-id="{job["id"]}"]',
@@ -215,3 +218,9 @@ class SeleniumBot:
     # -------------------------
     def _has_no_results(self) -> bool:
         return bool(self.driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
+
+    def _has_expired(self) -> bool:
+        return self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]') > 0
+
+    def _has_exhausted_limitation(self) -> bool:
+        return len(self.driver.find_elements(By.XPATH, '//*[text()="You’ve reached today\'s Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow."]')) > 0
