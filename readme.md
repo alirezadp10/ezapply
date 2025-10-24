@@ -1,7 +1,7 @@
 # 🤖 LinkedIn Job Auto Applier Bot (WIP)
 
 An intelligent **LinkedIn automation bot** that automatically searches for jobs and applies using the **Easy Apply** feature.  
-It uses **Selenium** for browser automation and **DeepInfra’s AI models** to intelligently answer application form questions.
+It uses **Selenium** for browser automation, **DeepInfra’s AI models** to intelligently answer application form questions, and an **embedding system** to recognize and respond to similar questions accurately.
 
 ---
 
@@ -9,6 +9,7 @@ It uses **Selenium** for browser automation and **DeepInfra’s AI models** to i
 
 - 🔐 Automatic LinkedIn login
 - 🔍 Job search by **keywords, country, and work type**
+- 💡 Embedding system for recognizing and answering similar questions
 - 🧠 Smart form completion using **AI (DeepInfra + LLaMA models)**
 - 💾 Saves application results in **SQLite**
 - 🕹️ Headless mode supported (no GUI browser)
