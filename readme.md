@@ -9,7 +9,7 @@ It uses **Selenium** for browser automation, **DeepInfra’s AI models** to inte
 
 - 🔐 Automatic LinkedIn login
 - 🔍 Job search by **keywords, country, and work type**
-- 💡 Embedding system for recognizing and answering similar questions
+- 💡 **Embedding system** for recognizing and answering similar questions
 - 🧠 Smart form completion using **AI (DeepInfra + LLaMA models)**
 - 💾 Saves application results in **SQLite**
 - 🕹️ Headless mode supported (no GUI browser)
