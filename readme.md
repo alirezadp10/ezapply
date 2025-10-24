@@ -62,12 +62,12 @@ python -m venv .venv
 
 ##### On macOS/Linux:
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 ##### On Windows (PowerShell):
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 ### 🧩 Step 3: Install dependencies
