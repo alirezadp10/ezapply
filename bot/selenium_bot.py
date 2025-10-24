@@ -38,7 +38,7 @@ class SeleniumBot:
     # Public API
     # -------------------------
     def run(self) -> None:
-        logger.info("Ensuring login state…")
+        logger.info("ℹ️ Ensuring login state…")
         self.auth.login_if_needed()
 
         # Optional: run against specific job IDs for debugging
@@ -82,17 +82,17 @@ class SeleniumBot:
         wait_until_page_loaded(self.driver, url)
 
         if self._has_no_results():
-            logger.info(f"No results for '{keyword}' in '{country}'. Skipping.")
+            logger.info(f"ℹ️ No results for '{keyword}' in '{country}'. Skipping.")
             return
 
         jobs = self._safe_get_easy_apply_jobs()
         if not jobs:
-            logger.info(f"No easy-apply jobs found for '{keyword}' in '{country}'.")
+            logger.info(f"ℹ️ No easy-apply jobs found for '{keyword}' in '{country}'.")
             return
 
         for job in jobs:
             if self.db.is_applied_for_job(job['id']):
-                logger.debug(f"Already applied to job #{job['id']}, skipping.")
+                logger.info(f"ℹ️ Already applied to job #{job['id']}, skipping.")
                 continue
 
             job_url = self.finder.build_job_url(job_id=job['id'])
@@ -137,7 +137,7 @@ class SeleniumBot:
                 })
             return normalized
         except Exception as e:
-            logger.error(f"Failed to fetch Easy Apply jobs: {e}")
+            logger.error(f"❌ Failed to fetch Easy Apply jobs: {e}")
             return []
 
     def _save_job_result(
@@ -175,7 +175,7 @@ class SeleniumBot:
             try:
                 ids.append(token)
             except ValueError:
-                logger.warning(f"Ignoring invalid TEST_WITH id: {token}")
+                logger.warning(f"⚠️ Ignoring invalid TEST_WITH id: {token}")
         return ids
 
     @staticmethod
@@ -198,7 +198,7 @@ class SeleniumBot:
     def _resolve_keywords(self) -> List[str]:
         keywords = self._split_csv(getattr(settings, "KEYWORDS", None))
         if not keywords:
-            logger.warning("No KEYWORDS configured; nothing to search for.")
+            logger.warning("⚠️ No KEYWORDS configured; nothing to search for.")
         return keywords
 
     @staticmethod
