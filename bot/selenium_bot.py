@@ -65,7 +65,9 @@ class SeleniumBot:
                 time.sleep(settings.DELAY_TIME)
                 if self._has_expired():
                     continue
-                wait_until_page_loaded(self.driver, url, wait_for=(By.ID, "jobs-apply-button-id"))
+                wait_until_page_loaded(
+                    self.driver, url, wait_for=(By.ID, "jobs-apply-button-id")
+                )
                 self.applicator.apply_to_job(job_id)
             except Exception as e:
                 logger.error(f"❌ Error applying to job #{job_id}: {e}")
@@ -91,18 +93,20 @@ class SeleniumBot:
             return
 
         for job in jobs:
-            if self.db.is_applied_for_job(job['id']):
+            if self.db.is_applied_for_job(job["id"]):
                 logger.info(f"ℹ️ Already applied to job #{job['id']}, skipping.")
                 continue
 
-            job_url = self.finder.build_job_url(job_id=job['id'])
+            job_url = self.finder.build_job_url(job_id=job["id"])
             try:
                 self.driver.get(job_url)
                 time.sleep(settings.DELAY_TIME)
                 if self._has_expired():
                     continue
                 if self._has_exhausted_limitation():
-                    logger.error("❌ Daily application limit reached. Stopping further applications for today.")
+                    logger.error(
+                        "❌ Daily application limit reached. Stopping further applications for today."
+                    )
                     continue
 
                 wait_until_page_loaded(
@@ -110,11 +114,15 @@ class SeleniumBot:
                     f'div[data-job-id="{job["id"]}"]',
                     wait_for=(By.ID, "jobs-apply-button-id"),
                 )
-                self.applicator.apply_to_job(job['id'])
+                self.applicator.apply_to_job(job["id"])
                 self._save_job_result(job, status="applied", base_url=url)
-                logger.success(f"✅ Applied to job #{job['id']}: {job.get('title', '(no title)')}")
+                logger.success(
+                    f"✅ Applied to job #{job['id']} '{job['title']}' in '{country}'"
+                )
             except Exception as e:
-                logger.error(f"❌ Error applying to job #{job['id']}: {e}")
+                logger.error(
+                    f"❌ Error applying to job #{job['id']} '{job['title']}' in '{country}': {e}"
+                )
                 self._save_job_result(job, status="failed", base_url=url, reason=str(e))
 
     # -------------------------
@@ -131,31 +139,30 @@ class SeleniumBot:
             for j in jobs:
                 if "id" not in j:
                     continue
-                normalized.append({
-                    "id": j["id"],
-                    "title": j.get("title") or "",
-                })
+                normalized.append(
+                    {
+                        "id": j["id"],
+                        "title": j.get("title") or "",
+                    }
+                )
             return normalized
         except Exception as e:
             logger.error(f"❌ Failed to fetch Easy Apply jobs: {e}")
             return []
 
     def _save_job_result(
-            self,
-            job: Dict[str, Any],
-            *,
-            status: str,
-            base_url: str,
-            reason: Optional[str] = None,
+        self,
+        job: Dict[str, Any],
+        *,
+        status: str,
+        base_url: str,
+        reason: Optional[str] = None,
     ) -> None:
-        job_id = job["id"]
-        title = job.get("title") or ""
-        job_url_with_context = f"{base_url}&currentJobId={job_id}"
         self.db.save_job(
-            title=title,
-            job_id=job_id,
+            title=job["title"],
+            job_id=job["id"],
             status=status,
-            url=job_url_with_context,
+            url=f"{base_url}&currentJobId={job['id']}",
             reason=reason,
         )
 
@@ -217,10 +224,27 @@ class SeleniumBot:
     # DOM helpers
     # -------------------------
     def _has_no_results(self) -> bool:
-        return bool(self.driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
+        return bool(
+            self.driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner")
+        )
 
     def _has_expired(self) -> bool:
-        return len(self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]')) > 0
+        return (
+            len(
+                self.driver.find_elements(
+                    By.XPATH, '//*[text()="No longer accepting applications"]'
+                )
+            )
+            > 0
+        )
 
     def _has_exhausted_limitation(self) -> bool:
-        return len(self.driver.find_elements(By.XPATH, '//*[text()="You’ve reached today\'s Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow."]')) > 0
+        return (
+            len(
+                self.driver.find_elements(
+                    By.XPATH,
+                    '//*[text()="You’ve reached today\'s Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow."]',
+                )
+            )
+            > 0
+        )

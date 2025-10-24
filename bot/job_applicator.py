@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import List, Dict
 
 import numpy as np
-from loguru import logger
 from selenium.webdriver.common.by import By
 
 from bot.ai_service import AIService
@@ -105,7 +104,6 @@ class JobApplicator:
 
     def _submit_if_ready(self, job_id: str) -> bool:
         if self._click_if_exists(ElementsEnum.SEL_SUBMIT):
-            logger.info(f"✅ Job {job_id} submitted.")
             self._click_if_exists(ElementsEnum.SEL_DISMISS)  # best-effort
             return True
         return False

@@ -76,7 +76,7 @@ def wait_until_page_loaded(
             break
 
         if now >= next_warn_at:
-            logger.warning(f"[{context}] ⏳ Still waiting for document.readyState='complete' after {now - start:.1f}s (state={state!r}).")
+            logger.warning(f"⏳ [{context}] Still waiting for document.readyState='complete' after {now - start:.1f}s (state={state!r}).")
             next_warn_at += warn_every
 
         if now >= deadline:
@@ -108,7 +108,7 @@ def wait_until_page_loaded(
 
         if now >= next_warn_at:
             elapsed = now - start
-            logger.warning(f"[{context}] ⏳ Page loaded but waiting for visible element(s): {detail} (elapsed {elapsed:.1f}s).")
+            logger.warning(f"⏳ [{context}] Page loaded but waiting for visible element(s): {detail} (elapsed {elapsed:.1f}s).")
             next_warn_at += warn_every
 
         if now >= deadline:
