@@ -220,7 +220,7 @@ class SeleniumBot:
         return bool(self.driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
 
     def _has_expired(self) -> bool:
-        return self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]') > 0
+        return len(self.driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]')) > 0
 
     def _has_exhausted_limitation(self) -> bool:
         return len(self.driver.find_elements(By.XPATH, '//*[text()="You’ve reached today\'s Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow."]')) > 0

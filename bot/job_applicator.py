@@ -88,8 +88,8 @@ class JobApplicator:
 
     def _click_apply_or_fail(self) -> None:
         try:
-            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID).click()
             wait_until_page_loaded(self.driver, ElementsEnum.APPLY_BTN_ID)
+            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID).click()
         except Exception as exc:
             raise ApplyButtonNotFound(
                 "Couldn't find or click the apply button."

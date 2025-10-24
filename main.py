@@ -16,7 +16,7 @@ def main():
     finally:
         if bot.driver:
             DriverManager.close_driver(bot.driver)
-        logger.info("🛑 Bot finished execution.")
+        logger.info("🚀 Bot finished execution.")
 
 if __name__ == "__main__":
     main()
