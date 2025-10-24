@@ -43,6 +43,7 @@ JOB_SEARCH_TIME_WINDOW=21600   # 6 hours
 
 # DeepInfra API
 DEEPINFRA_API_URL=https://api.deepinfra.com/v1/openai/chat/completions
+DEEPINFRA_EMBEDDING_API_URL=https://api.deepinfra.com/v1/inference/google/embeddinggemma-300m
 DEEPINFRA_MODEL_NAME=meta-llama/Meta-Llama-3-8B-Instruct
 DEEPINFRA_API_KEY=your_deepinfra_api_key
 ```
