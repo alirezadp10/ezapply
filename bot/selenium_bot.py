@@ -107,7 +107,7 @@ class SeleniumBot:
                     logger.error(
                         "❌ Daily application limit reached. Stopping further applications for today."
                     )
-                    continue
+                    exit(1)
 
                 wait_until_page_loaded(
                     self.driver,

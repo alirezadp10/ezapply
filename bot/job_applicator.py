@@ -76,13 +76,6 @@ class JobApplicator:
             if self._next_step():
                 continue
 
-            # If neither submit nor next-step is available and no payload, we may be stuck.
-            # Fail fast with a helpful message.
-            if not payload:
-                raise JobApplyError(
-                    "No form payload and cannot advance; the flow may be in an unexpected state."
-                )
-
     # Click & navigation helpers ----------------------------------------------
 
     def _click_apply_or_fail(self) -> None:

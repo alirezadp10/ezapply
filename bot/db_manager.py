@@ -45,7 +45,7 @@ class DBManager:
 
     def is_applied_for_job(self, job_id: str) -> bool:
         session = self.session()
-        job = session.query(Job).filter_by(job_id=job_id).first()
+        job = session.query(Job).filter(Job.job_id == job_id, Job.status != "failed").first()
         session.close()
         if job:
             return True
