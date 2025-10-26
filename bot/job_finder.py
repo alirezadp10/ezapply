@@ -36,10 +36,10 @@ class JobFinder:
     def get_easy_apply_jobs(self):
         jobs = []
         time.sleep(settings.DELAY_TIME)
-        for div in self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_ID):
+        for div in self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_ID.value):
             job_id = div.get_attribute("data-job-id")
             if "Easy Apply" in div.text:
-                job_title = div.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_TITLE)
+                job_title = div.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_TITLE.value)
                 if not job_title:
                     logger.error(f"❌ Could not find job title for #{job_id}")
                     continue

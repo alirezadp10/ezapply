@@ -80,8 +80,8 @@ class JobApplicator:
 
     def _click_apply_or_fail(self) -> None:
         try:
-            wait_until_page_loaded(self.driver, ElementsEnum.APPLY_BTN_ID)
-            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID).click()
+            wait_until_page_loaded(self.driver, ElementsEnum.APPLY_BTN_ID.value)
+            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID.value).click()
         except Exception as exc:
             raise ApplyButtonNotFound(
                 "Couldn't find or click the apply button."
@@ -92,12 +92,12 @@ class JobApplicator:
         Attempts to go to the next step (or review). Returns True if we clicked something.
         """
         return self._click_if_exists(
-            ElementsEnum.SEL_NEXT_STEP
-        ) or self._click_if_exists(ElementsEnum.SEL_REVIEW)
+            ElementsEnum.SEL_NEXT_STEP.value
+        ) or self._click_if_exists(ElementsEnum.SEL_REVIEW.value)
 
     def _submit_if_ready(self, job_id: str) -> bool:
-        if self._click_if_exists(ElementsEnum.SEL_SUBMIT):
-            self._click_if_exists(ElementsEnum.SEL_DISMISS)  # best-effort
+        if self._click_if_exists(ElementsEnum.SEL_SUBMIT.value):
+            self._click_if_exists(ElementsEnum.SEL_DISMISS.value)  # best-effort
             return True
         return False
 
@@ -118,12 +118,12 @@ class JobApplicator:
 
     def _has_error_icon(self) -> bool:
         return bool(
-            self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_ERROR_ICON)
+            self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_ERROR_ICON.value)
         )
 
     def _close_and_discard(self) -> None:
-        self._click_if_exists(ElementsEnum.SEL_DISMISS)
-        self._click_if_exists(ElementsEnum.SEL_DISCARD)
+        self._click_if_exists(ElementsEnum.SEL_DISMISS.value)
+        self._click_if_exists(ElementsEnum.SEL_DISCARD.value)
 
     # Data/DB helpers ----------------------------------------------------------
 
