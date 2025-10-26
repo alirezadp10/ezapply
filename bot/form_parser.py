@@ -1,3 +1,5 @@
+from loguru import logger
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 import re
 from bot.enums import ElementsEnum
@@ -9,7 +11,12 @@ class FormParser:
 
     def parse_form_fields(self):
         """Parse visible and enabled input, select, textarea, checkbox, and radio fields from the modal form."""
-        modal = self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value)
+        try:
+            modal = self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value)
+        except NoSuchElementException:
+            logger.error("❌ could not find modal element")
+            return []
+
         form = next(
             iter(modal.find_elements(By.TAG_NAME, ElementsEnum.TAG_FORM.value)), None
         )
