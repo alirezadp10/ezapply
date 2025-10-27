@@ -12,7 +12,7 @@ class Settings:
     DELAY_TIME: int = int(os.getenv("DELAY_TIME", 5))
     WAIT_WARN_AFTER: int = int(os.getenv("WAIT_WARN_AFTER", 10))
     SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", 0.95))
-    MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 10))
+    MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 3))
 
     LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
     LINKEDIN_USERNAME: str = os.getenv("LINKEDIN_USERNAME")
