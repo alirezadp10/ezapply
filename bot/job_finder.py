@@ -38,6 +38,8 @@ class JobFinder:
         time.sleep(settings.DELAY_TIME)
         for div in self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_ID.value):
             job_id = div.get_attribute("data-job-id")
+            if job_id == "search":
+                continue
             if "Easy Apply" in div.text:
                 job_title = div.find_elements(By.CSS_SELECTOR, ElementsEnum.JOB_TITLE.value)
                 if not job_title:
