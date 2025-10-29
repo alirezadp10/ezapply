@@ -3,6 +3,7 @@ from typing import Iterable, Optional, Tuple
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
 from loguru import logger
+from bot.config import settings
 
 Locator = Tuple[str, str]  # (By.CSS_SELECTOR, "…") etc.
 
@@ -29,7 +30,6 @@ def wait_until_page_loaded(
     driver: webdriver.Remote,
     context: str,
     *,
-    timeout: float = 300.0,                 # 5 minutes
     poll: float = 0.25,                     # how often to check (seconds)
     warn_every: Optional[float] = None,     # falls back to settings.WAIT_WARN_AFTER
     wait_for: Optional[Locator] = None,     # wait until ANY element matching this locator is visible
@@ -41,7 +41,6 @@ def wait_until_page_loaded(
     Args:
         driver: Selenium WebDriver.
         context: Label for logs.
-        timeout: Max seconds to wait overall (readyState + element(s)).
         poll: Poll interval.
         warn_every: Log a warning every N seconds while waiting.
         wait_for: A single locator (By, value) that must become visible.
@@ -52,8 +51,7 @@ def wait_until_page_loaded(
     """
     # Pull default warn cadence from your settings if not provided
     try:
-        from bot.config import settings  # type: ignore
-        default_warn = float(getattr(settings, "WAIT_WARN_AFTER", 30.0))
+        default_warn = settings.WAIT_WARN_AFTER
     except Exception:
         default_warn = 30.0
 
@@ -62,7 +60,7 @@ def wait_until_page_loaded(
 
     start = time.monotonic()
     next_warn_at = start + warn_every
-    deadline = start + timeout
+    deadline = start + settings.TIMEOUT
 
     # Phase 1: readyState == "complete"
     while True:
