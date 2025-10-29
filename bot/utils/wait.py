@@ -78,7 +78,7 @@ def wait_until_page_loaded(
             next_warn_at += warn_every
 
         if now >= deadline:
-            raise TimeoutError(f"[{context}] ❌ Page did not load after {now - start:.1f}s (timeout {timeout}s). Last readyState={state!r}.")
+            raise TimeoutError(f"[{context}] ❌ Page did not load after {now - start:.1f}s (timeout {settings.TIMEOUT}s). Last readyState={state!r}.")
 
         time.sleep(poll)
 
@@ -110,6 +110,6 @@ def wait_until_page_loaded(
             next_warn_at += warn_every
 
         if now >= deadline:
-            raise TimeoutError(f"[{context}] ❌ Element(s) not visible in time: {detail} (timeout {timeout}s).")
+            raise TimeoutError(f"[{context}] ❌ Element(s) not visible in time: {detail} (timeout {settings.TIMEOUT}s).")
 
         time.sleep(poll)
