@@ -29,3 +29,6 @@ class ElementsEnum(str, Enum):
     SEL_FIELDSET_CHECKBOX_COMPONENT = (
         'fieldset[data-test-checkbox-form-component="true"]'
     )
+
+    def __str__(self) -> str:
+        return self.value

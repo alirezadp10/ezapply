@@ -85,4 +85,5 @@ class Country(str, Enum):
     THAILAND = 105146118
     VIETNAM = 104195383
 
-    # Australia & Oceania
+    def __str__(self) -> str:
+        return str(self.value)
