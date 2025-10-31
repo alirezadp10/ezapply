@@ -40,6 +40,8 @@ def main() -> None:
 
                 driver.get(url)
                 wait_until_page_loaded(driver, url)
+                driver.get(url)
+                wait_until_page_loaded(driver, url)
 
                 click_if_exists(
                     driver,
