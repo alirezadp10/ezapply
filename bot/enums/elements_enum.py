@@ -26,6 +26,9 @@ class ElementsEnum(str, Enum):
     SEL_FIELDSET = "fieldset"
     SEL_LABEL_FOR_TPL = "label[for='{id}']"
     ATTR_ROLE_COMBOBOX = "combobox"
+    JOB_ITEMS = "jobs-search__results-list"
+    SIGN_IN_MODAL = "#base-contextual-sign-in-modal > div > section > button"
+    OFFSITE_APPLY_SELECTOR = '[data-svg-class-name="apply-button__offsite-apply-icon-svg"]'
     SEL_FIELDSET_CHECKBOX_COMPONENT = (
         'fieldset[data-test-checkbox-form-component="true"]'
     )

@@ -4,7 +4,7 @@ from bot.config import settings
 
 class DriverManager:
     @staticmethod
-    def create_driver():
+    def create_driver(user_data_dir: str):
         opts = Options()
 
         if settings.HEADLESS:
@@ -14,7 +14,7 @@ class DriverManager:
         opts.add_experimental_option("prefs", {
             "profile.managed_default_content_settings.images": 0,
         })
-        opts.add_argument(f"user-data-dir={settings.USER_DATA_DIR}")
+        opts.add_argument(f"user-data-dir={user_data_dir}")
 
         return webdriver.Chrome(options=opts)
 

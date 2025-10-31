@@ -2,15 +2,15 @@ from typing import Optional
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
-
+from bot.config import settings
 from bot.models import Job, Base, Field
 from sqlalchemy.exc import IntegrityError
 import numpy as np
 
 
 class DBManager:
-    def __init__(self, db_url: str):
-        self.engine = create_engine(db_url, echo=False)
+    def __init__(self):
+        self.engine = create_engine(settings.SQLITE_DB_PATH, echo=False)
         self.session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
