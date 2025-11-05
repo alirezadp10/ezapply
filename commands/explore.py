@@ -33,11 +33,17 @@ def explore_jobs(driver, finder, countries, keywords):
 def process_page(driver, url):
     """Processes a single job page."""
     get_and_wait_until_loaded(driver, url)
-    get_and_wait_until_loaded(driver, url)
-    get_and_wait_until_loaded(driver, url)
+    click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.SIGN_IN_MODAL)
     time.sleep(3)
 
+    get_and_wait_until_loaded(driver, url)
     click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.SIGN_IN_MODAL)
+    time.sleep(3)
+
+    get_and_wait_until_loaded(driver, url)
+    click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.SIGN_IN_MODAL)
+    time.sleep(3)
+
 
 
     if body_has_text(driver, "Please make sure your keywords are spelled correctly"):
