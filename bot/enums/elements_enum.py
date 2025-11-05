@@ -28,6 +28,7 @@ class ElementsEnum(str, Enum):
     ATTR_ROLE_COMBOBOX = "combobox"
     JOB_ITEMS = "jobs-search__results-list"
     SIGN_IN_MODAL = "#base-contextual-sign-in-modal > div > section > button"
+    # contextual-sign-in-modal__modal-dismiss-icon
     OFFSITE_APPLY_SELECTOR = '[data-svg-class-name="apply-button__offsite-apply-icon-svg"]'
     SEL_FIELDSET_CHECKBOX_COMPONENT = (
         'fieldset[data-test-checkbox-form-component="true"]'

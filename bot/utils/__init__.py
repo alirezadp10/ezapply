@@ -1,1 +1,1 @@
-from .wait import wait_until_page_loaded
+from .wait import get_and_wait_until_loaded
