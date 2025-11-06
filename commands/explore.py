@@ -19,9 +19,9 @@ from bot.helpers import (
     build_job_url,
     safe_action,
     safe_find_element,
+    get_and_wait_until_loaded,
 )
 from bot.logger_manager import setup_logger
-from bot.utils.wait import get_and_wait_until_loaded
 
 
 def explore_jobs(driver, db, countries, keywords):

@@ -5,12 +5,12 @@ from selenium.webdriver.common.by import By
 from selenium.common import WebDriverException
 
 from bot.config import settings
-from bot.utils import get_and_wait_until_loaded
 from bot.helpers import (
     safe_find_element,
     safe_action,
     click_if_exists,
     body_has_text,
+    get_and_wait_until_loaded,
 )
 
 
