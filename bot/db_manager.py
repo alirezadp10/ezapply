@@ -14,9 +14,9 @@ class DBManager:
         self.session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
-    def save_job(self, title: str, job_id: str, status: str, url: str, reason: Optional[str] = None):
+    def save_job(self, job_id: str, title: str, description: str, url: str):
         session = self.session()
-        job = Job(title=title, job_id=job_id, status=status, url=url, reason=reason)
+        job = Job(job_id=job_id, title=title, description=description, url=url)
         session.add(job)
         session.commit()
         session.close()

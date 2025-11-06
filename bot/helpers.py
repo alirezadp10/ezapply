@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from bot.config import settings
-from bot.enums import Country, ElementsEnum
+from bot.enums import Country, ElementsEnum, WorkTypesEnum
 from contextlib import suppress
 
 
@@ -161,3 +161,30 @@ def click_with_rate_limit_checking(driver, job_item, delay=2):
         time.sleep(delay * 2)
 
     return False
+
+
+def build_job_url(
+    keyword: Optional[str] = None,
+    country_id: Optional[str] = None,
+    job_id: Optional[str] = None,
+) -> str:
+    base_url = settings.LINKEDIN_BASE_URL
+
+    if job_id is not None:
+        return f"{base_url}/jobs/search?currentJobId={job_id}"
+
+    params = {}
+
+    if keyword:
+        quoted_keyword = f'"{keyword.strip()}"'
+        params["keywords"] = quoted_keyword
+
+    if country_id:
+        params["geoId"] = country_id
+
+    params["f_TPR"] = f"r{settings.JOB_SEARCH_TIME_WINDOW}"
+    params["f_WT"] = WorkTypesEnum(settings.WORK_TYPE)
+
+    query = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+
+    return f"{base_url}/jobs/search?{query}"
