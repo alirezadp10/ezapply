@@ -67,7 +67,7 @@ class JobApplicator:
 
     def _close_and_discard(self) -> None:
         click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
-        click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
+        click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISCARD_BUTTON)
 
     # Data/DB helpers ----------------------------------------------------------
 
