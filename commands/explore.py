@@ -43,7 +43,7 @@ def process_page(driver, db, url, country, keyword):
     for attempt in range(3):
         try:
             get_and_wait_until_loaded(driver, url)
-            click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.sign_in_modal)
+            click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.SIGN_IN_MODAL)
             time.sleep(2)
         except TimeoutException:
             logger.warning(f"⚠️ Timeout loading {url}, retrying...")
@@ -52,7 +52,7 @@ def process_page(driver, db, url, country, keyword):
         logger.info("🔎 No results found for this search.")
         return
 
-    container = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.job_items)
+    container = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.JOB_ITEMS)
     if not container:
         logger.warning("⚠️ No job container found.")
         return
@@ -71,7 +71,7 @@ def process_page(driver, db, url, country, keyword):
 
 def process_job_item(driver, db, job_item, country, keyword):
     """Safely process a single job card."""
-    click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.sign_in_modal)
+    click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.SIGN_IN_MODAL)
 
     if not click_with_rate_limit_checking(driver, job_item):
         logger.debug("⏳ Skipped job due to rate limit or click failure.")
@@ -81,7 +81,7 @@ def process_job_item(driver, db, job_item, country, keyword):
         logger.info("🔗 Skipped offsite application.")
         return
 
-    active_card = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.job_card_active)
+    active_card = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.JOB_CARD_ACTIVE)
     if not active_card:
         return
 
@@ -95,7 +95,7 @@ def process_job_item(driver, db, job_item, country, keyword):
         logger.warning(f"⚠️ Failed extracting job metadata: {e}")
         return
 
-    desc_elem = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.job_description)
+    desc_elem = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.JOB_DESCRIPTION)
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
     try:
