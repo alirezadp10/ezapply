@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from loguru import logger
-from bot.config import settings
+from bot.settings import settings
 
 
 class AIService:

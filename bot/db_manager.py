@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
 from loguru import logger
 
-from bot.config import settings
+from bot.settings import settings
 from bot.enums import JobStatusEnum
 from bot.models import Base, Job, Field
 
@@ -89,7 +89,15 @@ class DBManager:
                 session.query(Job)
                 .filter(
                     Job.applied_at.is_(None),
-                    or_(Job.status.is_(None), Job.status != JobStatusEnum.CANCELED, Job.status != JobStatusEnum.READY_FOR_APPLY),
+                    or_(
+                        Job.status.is_(None),
+                        Job.status.notin_(
+                            [
+                                JobStatusEnum.CANCELED,
+                                JobStatusEnum.READY_FOR_APPLY,
+                            ]
+                        ),
+                    ),
                 )
                 .all()
             )

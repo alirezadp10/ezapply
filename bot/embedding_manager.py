@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Iterable, Tuple
 import numpy as np
 
-from bot.config import settings
+from bot.settings import settings
 from bot.dto import FormItemDTO
 
 

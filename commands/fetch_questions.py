@@ -6,7 +6,7 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 
 from bot.authentication import Authentication
-from bot.config import settings
+from bot.settings import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import ModesEnum

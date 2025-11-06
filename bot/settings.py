@@ -10,14 +10,10 @@ class Settings:
     HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
     USER_DATA_DIR: str = os.getenv("USER_DATA_DIR", "/tmp/chrome-user-data")
     DELAY_TIME: int = int(os.getenv("DELAY_TIME", 5))
-    WAIT_WARN_AFTER: int = int(os.getenv("WAIT_WARN_AFTER", 10))
-    TIMEOUT: int = int(os.getenv("TIMEOUT", 60 * 10))
     SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", 0.95))
     MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 10))
 
-    LINKEDIN_BASE_URL: str = "http://www.linkedin.com"
-    LINKEDIN_USERNAME: str = os.getenv("LINKEDIN_USERNAME")
-    LINKEDIN_PASSWORD: str = os.getenv("LINKEDIN_PASSWORD")
+    LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
 
     USER_INFORMATION: str = os.getenv("USER_INFORMATION")
     JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 3600 * 6))

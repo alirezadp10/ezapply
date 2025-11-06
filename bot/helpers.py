@@ -13,13 +13,14 @@ from selenium.common import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from bot.config import settings
+from bot.settings import settings
 from bot.enums import Country, ElementsEnum, WorkTypesEnum
 
 
 # ==========================================
 # Basic helpers
 # ==========================================
+
 
 def split_csv(value: Optional[str]) -> List[str]:
     """Split a comma-separated string into a cleaned list."""
@@ -60,12 +61,15 @@ def country_value(country_name: str) -> str:
 # Page state checks
 # ==========================================
 
+
 def has_no_results(driver) -> bool:
     return bool(driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
 
 
 def has_expired(driver) -> bool:
-    return bool(driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]'))
+    return bool(
+        driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]')
+    )
 
 
 def has_exhausted_limit(driver) -> bool:
@@ -92,11 +96,12 @@ def body_has_text(driver, text: str) -> bool:
 # DOM utilities
 # ==========================================
 
+
 def get_children(
-        driver,
-        root: Optional[Union[WebElement, Tuple[str, str]]] = None,
-        by: By = By.XPATH,
-        value: str = "",
+    driver,
+    root: Optional[Union[WebElement, Tuple[str, str]]] = None,
+    by: By = By.XPATH,
+    value: str = "",
 ) -> List[WebElement]:
     """
     Return direct children of an element.
@@ -128,6 +133,7 @@ def click_if_exists(driver, by, selector, index=0) -> bool:
 
 def click_with_rate_limit_checking(driver, job_item, delay=2) -> bool:
     """Click element and detect LinkedIn's Easy Apply rate-limit."""
+
     def snapshot_count():
         return len(getattr(driver, "requests", []))
 
@@ -135,7 +141,13 @@ def click_with_rate_limit_checking(driver, job_item, delay=2) -> bool:
         requests = getattr(driver, "requests", [])[index:]
         for req in requests:
             resp = getattr(req, "response", None)
-            if resp and (getattr(resp, "status_code", None) or getattr(resp, "status", None)) == 429:
+            if (
+                resp
+                and (
+                    getattr(resp, "status_code", None) or getattr(resp, "status", None)
+                )
+                == 429
+            ):
                 return True
         return False
 
@@ -158,10 +170,11 @@ def click_with_rate_limit_checking(driver, job_item, delay=2) -> bool:
 # URL + safe operations
 # ==========================================
 
+
 def build_job_url(
-        keyword: Optional[str] = None,
-        country_id: Optional[str] = None,
-        job_id: Optional[str] = None,
+    keyword: Optional[str] = None,
+    country_id: Optional[str] = None,
+    job_id: Optional[str] = None,
 ) -> str:
     """Build LinkedIn job search URL."""
     base_url = settings.LINKEDIN_BASE_URL
@@ -231,20 +244,19 @@ def _all_visible(driver: webdriver.Remote, locators: Iterable[Locator]) -> bool:
 
 
 def get_and_wait_until_loaded(
-        driver: webdriver.Remote,
-        url: str,
-        *,
-        poll: float = 0.25,
-        warn_every: Optional[float] = None,
-        wait_for: Optional[Locator] = None,
-        wait_for_all: Optional[Iterable[Locator]] = None,
+    driver: webdriver.Remote,
+    url: str,
+    *,
+    poll: float = 0.25,
+    wait_for: Optional[Locator] = None,
+    wait_for_all: Optional[Iterable[Locator]] = None,
 ) -> None:
     """
     Opens a URL and waits until document.readyState == 'complete' and (optionally)
     specific element(s) are visible.
     """
-    warn_every = warn_every or getattr(settings, "WAIT_WARN_AFTER", 30.0)
-    timeout = getattr(settings, "TIMEOUT", 60.0)
+    warn_every = 30
+    timeout = 60
 
     driver.get(url)
     context = url
@@ -264,11 +276,15 @@ def get_and_wait_until_loaded(
             break
 
         if now >= next_warn_at:
-            logger.warning(f"⏳ [{context}] Waiting for readyState='complete' ({now - start:.1f}s, state={state!r})")
+            logger.warning(
+                f"⏳ [{context}] Waiting for readyState='complete' ({now - start:.1f}s, state={state!r})"
+            )
             next_warn_at += warn_every
 
         if now >= deadline:
-            raise TimeoutError(f"[{context}] ❌ Page did not load after {timeout}s (last state={state!r})")
+            raise TimeoutError(
+                f"[{context}] ❌ Page did not load after {timeout}s (last state={state!r})"
+            )
 
         time.sleep(poll)
 
@@ -277,16 +293,28 @@ def get_and_wait_until_loaded(
         next_warn_at = time.monotonic() + warn_every
         while True:
             now = time.monotonic()
-            ok = _any_visible(driver, wait_for) if wait_for else _all_visible(driver, wait_for_all)
-            detail = f"locator={wait_for!r}" if wait_for else f"locators={list(wait_for_all)!r}"
+            ok = (
+                _any_visible(driver, wait_for)
+                if wait_for
+                else _all_visible(driver, wait_for_all)
+            )
+            detail = (
+                f"locator={wait_for!r}"
+                if wait_for
+                else f"locators={list(wait_for_all)!r}"
+            )
             if ok:
                 return
 
             if now >= next_warn_at:
-                logger.warning(f"⏳ [{context}] Page loaded but waiting for visible element(s): {detail}")
+                logger.warning(
+                    f"⏳ [{context}] Page loaded but waiting for visible element(s): {detail}"
+                )
                 next_warn_at += warn_every
 
             if now >= deadline:
-                raise TimeoutError(f"[{context}] ❌ Element(s) not visible in time: {detail}")
+                raise TimeoutError(
+                    f"[{context}] ❌ Element(s) not visible in time: {detail}"
+                )
 
             time.sleep(poll)

@@ -4,7 +4,7 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 from selenium.common import WebDriverException
 
-from bot.config import settings
+from bot.settings import settings
 from bot.helpers import (
     safe_find_element,
     safe_action,

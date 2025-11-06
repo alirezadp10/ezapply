@@ -4,7 +4,7 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-from bot.config import settings
+from bot.settings import settings
 import undetected_chromedriver as uc
 
 
