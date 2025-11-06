@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from bot.config import settings
+from bot.enums import JobStatusEnum
 from bot.models import Job, Base, Field
 from sqlalchemy.exc import IntegrityError
 import numpy as np
@@ -39,6 +40,13 @@ class DBManager:
         jobs = session.query(Job).filter(Job.applied_at == None).all()
         session.close()
         return jobs
+
+    def cancel_job(self, pk: int, reason: str):
+        session = self.session()
+        session.query(Job).filter(Job.id == pk).update(
+            {"reason": reason, "status": JobStatusEnum.CANCELED}
+        )
+        session.close()
 
     def save_field(
         self, label: str, value: str, type: str, embeddings: list, job_id: str

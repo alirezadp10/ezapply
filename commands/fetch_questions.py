@@ -3,13 +3,14 @@ import time
 import random
 
 from loguru import logger
+from selenium.webdriver.common.by import By
 
 from bot.authentication import Authentication
 from bot.config import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import ModesEnum
-from bot.helpers import get_and_wait_until_loaded
+from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
 from bot.logger_manager import setup_logger
 
 
@@ -34,7 +35,10 @@ def main():
     for job in jobs:
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
         get_and_wait_until_loaded(driver, job.url)
-        print(job.job_id)
+        if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
+            db.cancel_job(job.id, "work type")
+
+        click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button")
 
 
 if __name__ == "__main__":
