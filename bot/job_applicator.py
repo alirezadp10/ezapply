@@ -4,7 +4,7 @@ from typing import List, Dict
 from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
-from bot.enums import ElementsEnum
+from bot.enums import ElementsEnum, JobStatusEnum
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
@@ -19,7 +19,7 @@ class JobApplicator:
         self.embedding_manager = EmbeddingManager()
         self.filler = FormFiller(driver)
 
-    def apply_to_job(self, job_id: str):
+    def apply_to_job(self, job_id: int):
         while True:
             payload = self.parser.parse_form_fields()
 
@@ -41,6 +41,7 @@ class JobApplicator:
                 return
 
             if self._check_questions_have_been_finished():
+                self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
                 return
 
             # Otherwise continue/review
