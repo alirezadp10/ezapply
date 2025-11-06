@@ -10,6 +10,7 @@ from bot.config import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import ModesEnum
+from bot.form_parser import FormParser
 from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
 from bot.logger_manager import setup_logger
 
@@ -28,6 +29,7 @@ def main():
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
     driver = DriverManager.create_driver(profile=args.username)
     db = DBManager()
+    parser = FormParser(driver)
 
     Authentication(driver).login(username=args.username, password=args.password)
 
@@ -39,10 +41,11 @@ def main():
             db.cancel_job(job.id, "work type mismatch")
             continue
 
-        if click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
+        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
             continue
 
         print(job.job_id)
+        parser.parse_form_fields()
 
 
 if __name__ == "__main__":

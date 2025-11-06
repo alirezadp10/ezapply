@@ -2,7 +2,6 @@ from enum import Enum
 
 
 class ElementsEnum(str, Enum):
-    APPLY_BUTTON_ID = "jobs-apply-button-id"
     JOB_TITLE = '.job-card-list__title--link span[aria-hidden="true"]'
     JOB_ID = "div[data-job-id]"
     NEXT_STEP_BUTTON = '[aria-label="Continue to next step"]'

@@ -1,7 +1,7 @@
+import re
 from loguru import logger
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
-import re
 from bot.enums import ElementsEnum
 
 
@@ -12,24 +12,22 @@ class FormParser:
     def parse_form_fields(self):
         """Parse visible and enabled input, select, textarea, checkbox, and radio fields from the modal form."""
         try:
-            modal = self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value)
+            modal = self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.MODAL)
         except NoSuchElementException:
             logger.error("❌ could not find modal element")
             return []
 
-        form = next(
-            iter(modal.find_elements(By.TAG_NAME, ElementsEnum.TAG_FORM.value)), None
-        )
+        form = next(iter(modal.find_elements(By.TAG_NAME, ElementsEnum.FORM)), None)
         if not form:
             return []
 
         fields = (
             self._extract_fields(
-                form, ElementsEnum.SEL_INPUT_NOT_RADIO.value, self._should_include_input
+                form, ElementsEnum.INPUT_NOT_RADIO, self._should_include_input
             )
             + self._extract_fields(
                 form,
-                ElementsEnum.SEL_SELECT.value,
+                ElementsEnum.SELECT,
                 self._should_include_select,
                 include_options=True,
             )
@@ -57,9 +55,7 @@ class FormParser:
             if include_options:
                 options = [
                     opt.text.strip()
-                    for opt in el.find_elements(
-                        By.TAG_NAME, ElementsEnum.TAG_OPTION.value
-                    )
+                    for opt in el.find_elements(By.TAG_NAME, ElementsEnum.OPTION)
                     if opt.text.strip()
                 ]
                 if options:
@@ -75,7 +71,7 @@ class FormParser:
     def extract_textareas(self, form):
         """Extracts visible and enabled multiline text fields."""
         results = []
-        for el in form.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_TEXTAREA.value):
+        for el in form.find_elements(By.CSS_SELECTOR, ElementsEnum.TEXTAREA):
             if not (el.is_displayed() and el.is_enabled()):
                 continue
             if el.get_attribute("value"):
@@ -98,14 +94,12 @@ class FormParser:
         results = []
         # Fieldsets with checkboxes — commonly identified by data-test-checkbox-form-component
         for fs in form.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.SEL_FIELDSET_CHECKBOX_COMPONENT.value
+            By.CSS_SELECTOR, ElementsEnum.CHECKBOX_FIELDSET_COMPONENT
         ):
             if not fs.is_displayed():
                 continue
 
-            checkboxes = fs.find_elements(
-                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
-            )
+            checkboxes = fs.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX)
             if not checkboxes:
                 continue
 
@@ -118,7 +112,7 @@ class FormParser:
                 if not (cb.is_displayed() and cb.is_enabled()):
                     continue
                 try:
-                    sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(
+                    sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(
                         id=cb.get_attribute("id")
                     )
                     label_el = fs.find_element(By.CSS_SELECTOR, sel)
@@ -158,13 +152,11 @@ class FormParser:
     def _extract_radios(self, form):
         """Extract radio button fieldsets and their labels/options."""
         results = []
-        for fs in form.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_FIELDSET.value):
+        for fs in form.find_elements(By.CSS_SELECTOR, ElementsEnum.FIELDSET):
             if not fs.is_displayed():
                 continue
 
-            radios = fs.find_elements(
-                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
-            )
+            radios = fs.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_RADIO)
             if not radios:
                 continue
 
@@ -185,16 +177,12 @@ class FormParser:
     def _extract_legend_text(self, fieldset):
         """Extract and clean text from <legend> or its inner span(s)."""
         try:
-            legend = fieldset.find_element(
-                By.TAG_NAME, ElementsEnum.TAG_LEGEND.value
-            ).text
+            legend = fieldset.find_element(By.TAG_NAME, ElementsEnum.LEGEND).text
             if not legend.strip():
                 # LinkedIn sometimes hides text in <span> elements
                 legend = " ".join(
                     span.text
-                    for span in fieldset.find_elements(
-                        By.TAG_NAME, ElementsEnum.TAG_SPAN.value
-                    )
+                    for span in fieldset.find_elements(By.TAG_NAME, ElementsEnum.SPAN)
                     if span.text.strip()
                 )
         except Exception:
@@ -208,7 +196,7 @@ class FormParser:
             if not (radio.is_displayed() and radio.is_enabled()):
                 continue
             try:
-                sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(
+                sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(
                     id=radio.get_attribute("id")
                 )
                 label_el = fieldset.find_element(By.CSS_SELECTOR, sel)
@@ -225,7 +213,7 @@ class FormParser:
     def _get_label(self, form, field_id):
         """Get label text by field ID and clean it."""
         try:
-            sel = ElementsEnum.SEL_LABEL_FOR_TPL.value.format(id=field_id)
+            sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(id=field_id)
             text = form.find_element(By.CSS_SELECTOR, sel).text
         except Exception:
             text = ""

@@ -6,14 +6,12 @@ import numpy as np
 from selenium.webdriver.common.by import By
 
 from bot.ai_service import AIService
-from bot.config import settings
 from bot.embedding_manager import EmbeddingManager
 from bot.enums import ElementsEnum
-from bot.exceptions import JobApplyError, FormFillError, ApplyButtonNotFound
+from bot.exceptions import FormFillError
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
-from bot.utils import wait_until_page_loaded
 
 
 class JobApplicator:
@@ -35,19 +33,7 @@ class JobApplicator:
     # Public API ---------------------------------------------------------------
 
     def apply_to_job(self, job_id: str):
-        """
-        Returns True if submitted successfully, otherwise raises JobApplyError.
-        """
-        self._click_apply_or_fail()
-
-        step_count = 0
         while True:
-            step_count += 1
-            if step_count > settings.MAX_STEPS_PER_APPLICATION:
-                raise JobApplyError(
-                    f"Exceeded {settings.MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
-                )
-
             payload = self.parser.parse_form_fields()
 
             if payload:
@@ -69,35 +55,24 @@ class JobApplicator:
                 raise FormFillError("Couldn't fill out the form.")
 
             # Submit if ready
-            if self._submit_if_ready(job_id):
+            if self._submit_if_ready():
                 return True
 
             # Otherwise continue/review
             if self._next_step():
                 continue
 
-    # Click & navigation helpers ----------------------------------------------
-
-    def _click_apply_or_fail(self) -> None:
-        try:
-            wait_until_page_loaded(self.driver, ElementsEnum.APPLY_BTN_ID.value)
-            self.driver.find_element(By.ID, ElementsEnum.APPLY_BTN_ID.value).click()
-        except Exception as exc:
-            raise ApplyButtonNotFound(
-                "Couldn't find or click the apply button."
-            ) from exc
-
     def _next_step(self) -> bool:
         """
         Attempts to go to the next step (or review). Returns True if we clicked something.
         """
         return self._click_if_exists(
-            ElementsEnum.SEL_NEXT_STEP.value
-        ) or self._click_if_exists(ElementsEnum.SEL_REVIEW.value)
+            ElementsEnum.NEXT_STEP_BUTTON
+        ) or self._click_if_exists(ElementsEnum.REVIEW_BUTTON)
 
-    def _submit_if_ready(self, job_id: str) -> bool:
-        if self._click_if_exists(ElementsEnum.SEL_SUBMIT.value):
-            self._click_if_exists(ElementsEnum.SEL_DISMISS.value)  # best-effort
+    def _submit_if_ready(self) -> bool:
+        if self._click_if_exists(ElementsEnum.SUBMIT_BUTTON):
+            self._click_if_exists(ElementsEnum.DISMISS_BUTTON)  # best-effort
             return True
         return False
 
@@ -117,13 +92,11 @@ class JobApplicator:
         return False
 
     def _has_error_icon(self) -> bool:
-        return bool(
-            self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_ERROR_ICON.value)
-        )
+        return bool(self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.ERROR_ICON))
 
     def _close_and_discard(self) -> None:
-        self._click_if_exists(ElementsEnum.SEL_DISMISS.value)
-        self._click_if_exists(ElementsEnum.SEL_DISCARD.value)
+        self._click_if_exists(ElementsEnum.DISMISS_BUTTON)
+        self._click_if_exists(ElementsEnum.DISMISS_BUTTON)
 
     # Data/DB helpers ----------------------------------------------------------
 
@@ -164,7 +137,7 @@ class JobApplicator:
         # Load historical fields once
         historical = (
             self.db.get_all_fields()
-        )  # expects objects with .embedding, .label, .value
+        )  # expects objects with .embedding, .label,
         if not historical or not items:
             return
 
