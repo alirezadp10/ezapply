@@ -9,6 +9,7 @@ from bot.config import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import ModesEnum
+from bot.helpers import get_and_wait_until_loaded
 from bot.logger_manager import setup_logger
 
 
@@ -24,7 +25,7 @@ def main():
     args = parse_args()
 
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
-    driver = DriverManager.create_driver()
+    driver = DriverManager.create_driver(profile=args.username)
     db = DBManager()
 
     Authentication(driver).login(username=args.username, password=args.password)
@@ -32,6 +33,7 @@ def main():
     jobs = db.get_not_applied_jobs()
     for job in jobs:
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
+        get_and_wait_until_loaded(driver, job.url)
         print(job.job_id)
 
 
