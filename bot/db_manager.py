@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from bot.config import settings
@@ -14,14 +12,25 @@ class DBManager:
         self.session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
-    def save_job(self, job_id: str, title: str, description: str, url: str):
+    def save_job(
+        self, job_id: str, title: str, description: str, country: str, keyword: str, url: str
+    ):
         session = self.session()
-        job = Job(job_id=job_id, title=title, description=description, url=url)
+        job = Job(
+            job_id=job_id,
+            title=title,
+            description=description,
+            country=country,
+            keyword=keyword,
+            url=url,
+        )
         session.add(job)
         session.commit()
         session.close()
 
-    def save_field(self, label: str, value: str, type: str, embeddings: list, job_id: str):
+    def save_field(
+        self, label: str, value: str, type: str, embeddings: list, job_id: str
+    ):
         session = self.session()
         try:
             field = session.execute(
@@ -33,7 +42,13 @@ class DBManager:
                 field.type = type
             else:
                 arr = np.array(embeddings, dtype=np.float32)
-                field = Field(label=label, value=value, type=type, embedding=arr.tobytes(), job_id=job_id)
+                field = Field(
+                    label=label,
+                    value=value,
+                    type=type,
+                    embedding=arr.tobytes(),
+                    job_id=job_id,
+                )
                 session.add(field)
 
             session.commit()
@@ -45,7 +60,11 @@ class DBManager:
 
     def is_applied_for_job(self, job_id: str) -> bool:
         session = self.session()
-        job = session.query(Job).filter(Job.job_id == job_id, Job.status != "failed").first()
+        job = (
+            session.query(Job)
+            .filter(Job.job_id == job_id, Job.status != "failed")
+            .first()
+        )
         session.close()
         if job:
             return True

@@ -1,12 +1,7 @@
 import time
 import random
 from loguru import logger
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    StaleElementReferenceException,
-    TimeoutException,
-    WebDriverException,
-)
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
 from bot.driver_manager import DriverManager
@@ -22,45 +17,12 @@ from bot.helpers import (
     get_children,
     click_with_rate_limit_checking,
     build_job_url,
+    safe_action,
+    safe_find_element,
 )
 from bot.logger_manager import setup_logger
 from bot.utils.wait import get_and_wait_until_loaded
 
-
-# === Safe utility wrappers ===
-
-def safe_find_element(driver, by, value, *, retries=3, delay=1):
-    """Find element safely with retries."""
-    for attempt in range(retries):
-        try:
-            return driver.find_element(by, value)
-        except NoSuchElementException:
-            if attempt == retries - 1:
-                logger.warning(f"⚠️ Element not found: {value}")
-            time.sleep(delay)
-        except StaleElementReferenceException:
-            logger.debug("♻️ Retrying stale element...")
-            time.sleep(delay)
-    return None
-
-
-def safe_action(fn, name="unknown_action", retries=2, delay=2):
-    """Executes an action safely with retry/backoff."""
-    for attempt in range(retries):
-        try:
-            return fn()
-        except StaleElementReferenceException:
-            logger.warning(f"⚠️ Stale element during {name}, retrying...")
-        except TimeoutException:
-            logger.warning(f"⏱ Timeout during {name}, retrying...")
-        except WebDriverException as e:
-            logger.error(f"❌ WebDriver error during {name}: {e}")
-        time.sleep(delay * (attempt + 1))
-    logger.error(f"❌ Giving up {name} after {retries} retries.")
-    return None
-
-
-# === Core logic ===
 
 def explore_jobs(driver, db, countries, keywords):
     """Explore job listings for all countries and keywords."""
@@ -70,13 +32,13 @@ def explore_jobs(driver, db, countries, keywords):
             try:
                 logger.info(f"🔍 Exploring: keyword='{keyword}', country='{country}'")
                 url = build_job_url(keyword, country_val)
-                process_page(driver, db, url)
+                process_page(driver, db, url, country, keyword)
             except Exception as e:
                 logger.exception(f"💥 Failed to process {keyword=} {country=}: {e}")
                 time.sleep(random.uniform(3, 6))  # small cooldown
 
 
-def process_page(driver, db, url):
+def process_page(driver, db, url, country, keyword):
     """Processes a single job results page safely."""
     for attempt in range(3):
         try:
@@ -101,10 +63,13 @@ def process_page(driver, db, url):
         return
 
     for job_item in job_items:
-        safe_action(lambda: process_job_item(driver, db, job_item), name="process_job_item")
+        safe_action(
+            lambda: process_job_item(driver, db, job_item, country, keyword),
+            name="process_job_item",
+        )
 
 
-def process_job_item(driver, db, job_item):
+def process_job_item(driver, db, job_item, country, keyword):
     """Safely process a single job card."""
     click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.sign_in_modal)
 
@@ -131,11 +96,18 @@ def process_job_item(driver, db, job_item):
         return
 
     desc_elem = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.job_description)
-    description = desc_elem.text if desc_elem else ""
+    description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
     try:
-        db.save_job(job_id=job_id, title=title, description=description, url=link)
-        logger.success(f"✅ Saved new job: #{job_id} '{title}'")
+        db.save_job(
+            job_id=job_id,
+            title=title,
+            description=description,
+            country=country,
+            keyword=keyword,
+            url=link,
+        )
+        logger.success(f"✅ Saved job: #{job_id} '{title}' ({country}, {keyword})")
     except Exception as e:
         logger.exception(f"💾 Failed saving job {job_id}: {e}")
 

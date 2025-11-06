@@ -2,6 +2,12 @@ import os
 import time
 from typing import Optional, List, Union
 from loguru import logger
+from selenium.common import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -41,7 +47,6 @@ def country_value(country_name: str) -> str:
         raise ValueError(f"Unknown country '{country_name}'. Valid: {valid}") from e
 
 
-# --- DOM helpers ---
 def has_no_results(driver) -> bool:
     return bool(driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
 
@@ -132,11 +137,9 @@ def is_clickable(element):
 
 def click_with_rate_limit_checking(driver, job_item, delay=2):
     def snapshot_count():
-        """Return how many requests have been captured so far."""
         return len(getattr(driver, "requests", []))
 
     def has_new_rate_limit_since(index):
-        """Return True if a *new* 429 appeared after snapshot index."""
         requests = getattr(driver, "requests", [])[index:]
         for req in requests:
             resp = getattr(req, "response", None)
@@ -188,3 +191,34 @@ def build_job_url(
     query = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
 
     return f"{base_url}/jobs/search?{query}"
+
+
+def safe_find_element(driver, by, value, *, retries=3, delay=1):
+    """Find element safely with retries."""
+    for attempt in range(retries):
+        try:
+            return driver.find_element(by, value)
+        except NoSuchElementException:
+            if attempt == retries - 1:
+                logger.warning(f"⚠️ Element not found: {value}")
+            time.sleep(delay)
+        except StaleElementReferenceException:
+            logger.debug("♻️ Retrying stale element...")
+            time.sleep(delay)
+    return None
+
+
+def safe_action(fn, name="unknown_action", retries=2, delay=2):
+    """Executes an action safely with retry/backoff."""
+    for attempt in range(retries):
+        try:
+            return fn()
+        except StaleElementReferenceException:
+            logger.warning(f"⚠️ Stale element during {name}, retrying...")
+        except TimeoutException:
+            logger.warning(f"⏱ Timeout during {name}, retrying...")
+        except WebDriverException as e:
+            logger.error(f"❌ WebDriver error during {name}: {e}")
+        time.sleep(delay * (attempt + 1))
+    logger.error(f"❌ Giving up {name} after {retries} retries.")
+    return None
