@@ -1,10 +1,11 @@
 from enum import Enum
 
+
 class ModesEnum(str, Enum):
     EXPLORE = "explore"
-    FAKE = "fake"
-    REAL = "real"
-    TEST = "test"
+    FETCH_QUESTIONS = "fetch questions"
+    SCORE = "score"
+    APPLY = "apply"
 
     def __str__(self) -> str:
         return self.value

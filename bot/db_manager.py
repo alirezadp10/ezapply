@@ -13,7 +13,13 @@ class DBManager:
         Base.metadata.create_all(self.engine)
 
     def save_job(
-        self, job_id: str, title: str, description: str, country: str, keyword: str, url: str
+        self,
+        job_id: str,
+        title: str,
+        description: str,
+        country: str,
+        keyword: str,
+        url: str,
     ):
         session = self.session()
         job = Job(
@@ -27,6 +33,12 @@ class DBManager:
         session.add(job)
         session.commit()
         session.close()
+
+    def get_not_applied_jobs(self):
+        session = self.session()
+        jobs = session.query(Job).filter(Job.applied_at == None).all()
+        session.close()
+        return jobs
 
     def save_field(
         self, label: str, value: str, type: str, embeddings: list, job_id: str

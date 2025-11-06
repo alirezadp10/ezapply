@@ -15,7 +15,7 @@ class Settings:
     SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", 0.95))
     MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 10))
 
-    LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
+    LINKEDIN_BASE_URL: str = "http://www.linkedin.com"
     LINKEDIN_USERNAME: str = os.getenv("LINKEDIN_USERNAME")
     LINKEDIN_PASSWORD: str = os.getenv("LINKEDIN_PASSWORD")
 
