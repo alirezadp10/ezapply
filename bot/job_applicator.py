@@ -1,36 +1,23 @@
 from __future__ import annotations
-
-from typing import List, Dict
-
 import numpy as np
+from typing import List, Dict
 from selenium.webdriver.common.by import By
-
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
 from bot.enums import ElementsEnum
-from bot.exceptions import FormFillError
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
+from bot.helpers import click_if_exists
 
 
 class JobApplicator:
-    """
-    Orchestrates a multi_step job application flow:
-    - Clicks 'Apply'
-    - Iteratively parses current step, finds/creates answers
-    - Fills fields and persists them
-    - Advances steps and submits when ready
-    """
-
     def __init__(self, driver, db):
         self.driver = driver
         self.db = db
         self.parser = FormParser(driver)
         self.embedding_manager = EmbeddingManager()
         self.filler = FormFiller(driver)
-
-    # Public API ---------------------------------------------------------------
 
     def apply_to_job(self, job_id: str):
         while True:
@@ -44,19 +31,17 @@ class JobApplicator:
                 self._merge_ai_answers(items, ai_answers)
 
                 # Fill and persist
-                fields = self.filler.fill_fields(
-                    payload, items
-                )  # expects items as answers with labels
+                fields = self.filler.fill_fields(payload, items)
                 self._persist_filled_fields(fields, job_id)
 
             # Early surface of form-level errors
             if self._has_error_icon():
                 self._close_and_discard()
-                raise FormFillError("Couldn't fill out the form.")
+                self.db.cancel_job(pk=job_id, reason="Couldn't fill out the form.")
+                return
 
-            # Submit if ready
-            if self._submit_if_ready():
-                return True
+            if self._check_questions_have_been_finished():
+                return
 
             # Otherwise continue/review
             if self._next_step():
@@ -66,37 +51,22 @@ class JobApplicator:
         """
         Attempts to go to the next step (or review). Returns True if we clicked something.
         """
-        return self._click_if_exists(
-            ElementsEnum.NEXT_STEP_BUTTON
-        ) or self._click_if_exists(ElementsEnum.REVIEW_BUTTON)
-
-    def _submit_if_ready(self) -> bool:
-        if self._click_if_exists(ElementsEnum.SUBMIT_BUTTON):
-            self._click_if_exists(ElementsEnum.DISMISS_BUTTON)  # best-effort
-            return True
+        for sel in [ElementsEnum.NEXT_STEP_BUTTON, ElementsEnum.REVIEW_BUTTON]:
+            if click_if_exists(self.driver, By.CSS_SELECTOR, sel):
+                return True
         return False
 
-    def _click_if_exists(self, selector: str, retries: int = 1) -> bool:
-        """
-        Best-effort click by CSS selector. Optional small retry window.
-        """
-        for attempt in range(retries + 1):
-            try:
-                el = self.driver.find_element(By.CSS_SELECTOR, selector)
-                el.click()
-                wait_until_page_loaded(self.driver, selector)
-                return True
-            except Exception:
-                if attempt == retries:
-                    return False
+    def _check_questions_have_been_finished(self) -> bool:
+        if self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SUBMIT_BUTTON):
+            return True
         return False
 
     def _has_error_icon(self) -> bool:
         return bool(self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.ERROR_ICON))
 
     def _close_and_discard(self) -> None:
-        self._click_if_exists(ElementsEnum.DISMISS_BUTTON)
-        self._click_if_exists(ElementsEnum.DISMISS_BUTTON)
+        click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
+        click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
 
     # Data/DB helpers ----------------------------------------------------------
 

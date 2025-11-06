@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, select, or_
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from bot.config import settings
 from bot.enums import JobStatusEnum
@@ -41,7 +41,7 @@ class DBManager:
             session.query(Job)
             .filter(
                 Job.applied_at.is_(None),
-                or_(Job.status.is_(None), Job.status != JobStatusEnum.CANCELED)
+                or_(Job.status.is_(None), Job.status != JobStatusEnum.CANCELED),
             )
             .all()
         )
@@ -61,24 +61,15 @@ class DBManager:
     ):
         session = self.session()
         try:
-            field = session.execute(
-                select(Field).where(Field.label == label)
-            ).scalar_one_or_none()
-
-            if field:
-                field.value = value
-                field.type = type
-            else:
-                arr = np.array(embeddings, dtype=np.float32)
-                field = Field(
+            session.add(
+                Field(
                     label=label,
                     value=value,
                     type=type,
-                    embedding=arr.tobytes(),
+                    embedding=np.array(embeddings, dtype=np.float32).tobytes(),
                     job_id=job_id,
                 )
-                session.add(field)
-
+            )
             session.commit()
         except IntegrityError:
             session.rollback()

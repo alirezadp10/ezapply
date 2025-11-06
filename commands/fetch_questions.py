@@ -10,8 +10,8 @@ from bot.config import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import ModesEnum
-from bot.form_parser import FormParser
 from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
+from bot.job_applicator import JobApplicator
 from bot.logger_manager import setup_logger
 
 
@@ -29,7 +29,6 @@ def main():
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
     driver = DriverManager.create_driver(profile=args.username)
     db = DBManager()
-    parser = FormParser(driver)
 
     Authentication(driver).login(username=args.username, password=args.password)
 
@@ -45,7 +44,7 @@ def main():
             continue
 
         print(job.job_id)
-        parser.parse_form_fields()
+        JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
 
 
 if __name__ == "__main__":

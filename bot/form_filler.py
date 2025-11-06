@@ -91,11 +91,9 @@ class FormFiller:
         el.send_keys(str(answer))
 
         # Quirk: close potential role=combobox overlay if present
-        if el.get_attribute("role") == ElementsEnum.ATTR_ROLE_COMBOBOX.value:
+        if el.get_attribute("role") == ElementsEnum.ROLE_COMBOBOX:
             try:
-                self.driver.find_element(
-                    By.CSS_SELECTOR, ElementsEnum.SEL_MODAL.value
-                ).click()
+                self.driver.find_element(By.CSS_SELECTOR, ElementsEnum.MODAL).click()
             except Exception:
                 pass
 
@@ -114,12 +112,8 @@ class FormFiller:
         el.send_keys(str(answer))
 
     def _handle_fieldset(self, el: WebElement, answer: Any) -> None:
-        has_radio = el.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
-        )
-        has_checkbox = el.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
-        )
+        has_radio = el.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_RADIO)
+        has_checkbox = el.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX)
 
         if has_radio:
             self._click_radio_in_fieldset(el, str(answer))
@@ -129,9 +123,7 @@ class FormFiller:
     def _handle_generic_editable(self, el: WebElement, answer: Any) -> None:
         # Fallback for contenteditable or nested input-like areas
         try:
-            editable = el.find_element(
-                By.CSS_SELECTOR, ElementsEnum.SEL_CONTENTEDITABLE.value
-            )
+            editable = el.find_element(By.CSS_SELECTOR, ElementsEnum.CONTENTEDITABLE)
             self._scroll_into_view(editable)
             editable.clear()
             editable.send_keys(str(answer))
@@ -146,9 +138,7 @@ class FormFiller:
         if not answer:
             return False
 
-        radios = fieldset.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value
-        )
+        radios = fieldset.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_RADIO)
         answer_norm = answer.strip().lower()
 
         def click_via_label(radio: WebElement) -> bool:
@@ -189,7 +179,7 @@ class FormFiller:
         # Build label map once
         labels: Dict[str, tuple[WebElement, str]] = {
             lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
-            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.TAG_LABEL.value)
+            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.LABEL)
             if lab.get_attribute("for")
         }
 
@@ -229,12 +219,12 @@ class FormFiller:
 
         desired = self._normalize_multi_answer(answer)
         checkboxes = fieldset.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
+            By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX
         )
 
         labels: Dict[str, tuple[WebElement, str]] = {
             lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
-            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.TAG_LABEL.value)
+            for lab in fieldset.find_elements(By.TAG_NAME, ElementsEnum.LABEL)
             if lab.get_attribute("for")
         }
 
@@ -339,10 +329,8 @@ class FormFiller:
         inferred_type = input_type_attr or tag
 
         if tag == "fieldset":
-            if el.find_elements(By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_RADIO.value):
+            if el.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_RADIO):
                 inferred_type = "radio"
-            elif el.find_elements(
-                By.CSS_SELECTOR, ElementsEnum.SEL_INPUT_CHECKBOX.value
-            ):
+            elif el.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX):
                 inferred_type = "checkbox-group"
         return inferred_type
