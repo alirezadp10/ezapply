@@ -36,9 +36,13 @@ def main():
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
         get_and_wait_until_loaded(driver, job.url)
         if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
-            db.cancel_job(job.id, "work type")
+            db.cancel_job(job.id, "work type mismatch")
+            continue
 
-        click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button")
+        if click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
+            continue
+
+        print(job.job_id)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,11 @@
 import re
 from typing import Optional
 from pathlib import Path
-from seleniumwire import webdriver
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from bot.config import settings
+import undetected_chromedriver as uc
 
 
 class DriverManager:
@@ -12,32 +13,30 @@ class DriverManager:
     def create_driver(profile: Optional[str] = None, incognito: bool = False):
         opts = Options()
 
+        # --- Headless mode (modern flag) ---
         if settings.HEADLESS:
             opts.add_argument("--headless=new")
 
+        # --- Optional incognito ---
         if incognito:
             opts.add_argument("--incognito")
 
-        opts.page_load_strategy = "none"
-        opts.add_experimental_option(
-            "prefs",
-            {"profile.managed_default_content_settings.images": 0},
-        )
-
+        # --- User profile directory setup ---
         normalized_profile = DriverManager._normalize_profile_name(profile)
-
-        # ✅ Store profiles under project directory
         base_dir = Path(__file__).resolve().parent.parent / "profiles"
         profile_dir = base_dir / normalized_profile if normalized_profile else Path(settings.USER_DATA_DIR)
-
-        # Create directory if missing
         profile_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"✅ Using profile dir: {profile_dir}")
-        opts.add_argument(f"user-data-dir={profile_dir}")
-
-        driver = webdriver.Chrome(options=opts)
+        # --- Create driver ---
+        driver = uc.Chrome(options=opts, user_data_dir=profile_dir)
         driver.maximize_window()
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => undefined
+            })
+          """
+        })
         return driver
 
     @staticmethod

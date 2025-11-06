@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, or_
 from sqlalchemy.orm import sessionmaker
 from bot.config import settings
 from bot.enums import JobStatusEnum
@@ -37,7 +37,14 @@ class DBManager:
 
     def get_not_applied_jobs(self):
         session = self.session()
-        jobs = session.query(Job).filter(Job.applied_at == None).all()
+        jobs = (
+            session.query(Job)
+            .filter(
+                Job.applied_at.is_(None),
+                or_(Job.status.is_(None), Job.status != JobStatusEnum.CANCELED)
+            )
+            .all()
+        )
         session.close()
         return jobs
 
@@ -46,6 +53,7 @@ class DBManager:
         session.query(Job).filter(Job.id == pk).update(
             {"reason": reason, "status": JobStatusEnum.CANCELED}
         )
+        session.commit()
         session.close()
 
     def save_field(
