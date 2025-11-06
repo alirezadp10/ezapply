@@ -92,7 +92,7 @@ def has_offsite_apply_icon(driver) -> bool:
     """
     Returns True if the page has the offsite apply icon, else False.
     """
-    elems = driver.find_elements(By.CSS_SELECTOR, ElementsEnum.OFFSITE_APPLY_SELECTOR)
+    elems = driver.find_elements(By.CSS_SELECTOR, ElementsEnum.offsite_apply_icon)
     return len(elems) > 0
 
 
