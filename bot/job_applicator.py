@@ -71,7 +71,7 @@ class JobApplicator:
 
     # Data/DB helpers ----------------------------------------------------------
 
-    def _persist_filled_fields(self, fields: List[FormItemDTO], job_id: str) -> None:
+    def _persist_filled_fields(self, fields: List[FormItemDTO], job_id: int) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
         """
