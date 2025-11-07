@@ -52,6 +52,9 @@ def main():
             logger.error("❌ Couldn't find apply button.")
             continue
 
+        if body_has_text(driver, "Job search safety reminder"):
+            driver.find_element(By.CSS_SELECTOR, "[data-live-test-job-apply-button]").click()
+
         logger.info(f"🔎 Processing job #{job.id}")
         JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
 

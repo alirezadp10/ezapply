@@ -68,9 +68,6 @@ def find_elements(driver, by, selector, index=0, retries=0):
 
 def click_if_exists(driver, by, selector, index=0, retries=0) -> bool:
     """Try to find and click element if clickable. Return True if clicked."""
-    if body_has_text(driver, "Job search safety reminder"):
-        driver.find_element(By.CSS_SELECTOR, "[data-test-modal-close-btn]").click()
-
     for attempt in range(retries + 1):
         try:
             driver.find_elements(by, selector)[index].click()
