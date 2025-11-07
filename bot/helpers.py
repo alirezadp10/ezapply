@@ -125,12 +125,9 @@ def click_if_exists(driver, by, selector, index=0, retries: int = 5) -> bool:
     """Try to find and click element if clickable. Return True if clicked."""
     for attempt in range(retries + 1):
         try:
-            el = driver.find_elements(by, selector)[index]
-            if el.is_displayed() and el.is_enabled():
-                el.click()
-                return True
+            driver.find_elements(by, selector)[index].click()
+            return True
         except Exception:
-            print("repeated click")
             time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
             if attempt == retries:
                 return False

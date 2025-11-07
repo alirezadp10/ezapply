@@ -41,6 +41,11 @@ def main():
             logger.error("❌ Work type mismatch.")
             continue
 
+        if body_has_text(driver, "No longer accepting applications"):
+            db.cancel_job(job.id, JobReasonEnum.EXPIRED)
+            logger.error("❌ Request has been expired.")
+            continue
+
         if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
             db.cancel_job(job.id, JobReasonEnum.APPLY_BUTTON)
             logger.error("❌ Couldn't find apply button.")
