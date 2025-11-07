@@ -9,7 +9,7 @@ from bot.authentication import Authentication
 from bot.settings import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
-from bot.enums import ModesEnum, JobReasonEnum
+from bot.enums import ModesEnum, JobReasonEnum, ElementsEnum
 from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
 from bot.job_applicator import JobApplicator
 from bot.logger_manager import setup_logger
@@ -36,21 +36,26 @@ def main():
     for job in jobs:
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
         get_and_wait_until_loaded(driver, job.url)
+
+        click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
         if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
             db.cancel_job(job.id, JobReasonEnum.WORK_TYPE_MISMATCH)
             logger.error("❌ Work type mismatch.")
             continue
 
+        click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
         if body_has_text(driver, "No longer accepting applications"):
             db.cancel_job(job.id, JobReasonEnum.EXPIRED)
             logger.error("❌ Request has been expired.")
             continue
 
-        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
+        click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
+        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
             db.cancel_job(job.id, JobReasonEnum.APPLY_BUTTON)
             logger.error("❌ Couldn't find apply button.")
             continue
 
+        click_if_exists(driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
         JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
 
 if __name__ == "__main__":

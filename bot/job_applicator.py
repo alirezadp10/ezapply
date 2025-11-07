@@ -24,6 +24,7 @@ class JobApplicator:
     def apply_to_job(self, job_id: int):
         try:
             while True:
+                print("hi")
                 payload = self.parser.parse_form_fields()
 
                 if payload:
