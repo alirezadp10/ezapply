@@ -89,7 +89,7 @@ class DBManager:
                 session.query(Job)
                 .filter(
                     or_(
-                        Job.reason == "Couldn't fill out the form.",
+                        Job.reason == "Couldn't fill out the form",
                         Job.reason == "Couldn't find apply button",
                         Job.status.is_(None),
                     ),

@@ -6,7 +6,7 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
-from bot.enums import ElementsEnum, JobStatusEnum
+from bot.enums import ElementsEnum, JobStatusEnum, JobReasonEnum
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
@@ -24,7 +24,6 @@ class JobApplicator:
     def apply_to_job(self, job_id: int):
         try:
             while True:
-                print("while")
                 payload = self.parser.parse_form_fields()
 
                 if payload:
@@ -37,7 +36,7 @@ class JobApplicator:
 
                 if self._has_error_icon():
                     self._close_and_discard()
-                    self.db.cancel_job(pk=job_id, reason="Couldn't fill out the form.")
+                    self.db.cancel_job(pk=job_id, reason=JobReasonEnum.FILL_OUT_FORM)
                     logger.error("❌ Couldn't fill out the form.")
                     return
 
