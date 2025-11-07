@@ -7,10 +7,12 @@ from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
 from bot.enums import ElementsEnum, JobStatusEnum, JobReasonEnum
+from bot.exceptions import JobApplyError
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
 from bot.dto import FormItemDTO
 from bot.helpers import click_if_exists
+from bot.settings import settings
 
 
 class JobApplicator:
@@ -23,10 +25,18 @@ class JobApplicator:
 
     def apply_to_job(self, job_id: int):
         try:
+            step_count = 0
             while True:
+                step_count += 1
+                if step_count > settings.MAX_STEPS_PER_APPLICATION:
+                    raise JobApplyError(
+                        f"Exceeded {settings.MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
+                    )
+
                 print("hi")
                 payload = self.parser.parse_form_fields()
 
+                print("30")
                 if payload:
                     items = self._prepare_items_with_embeddings(payload)
                     self._hydrate_answers_from_history(items)
@@ -35,17 +45,20 @@ class JobApplicator:
                     fields = self.filler.fill_fields(payload, items)
                     self._persist_filled_fields(fields, job_id)
 
+                print("39")
                 if self._has_error_icon():
                     self._close_and_discard()
                     self.db.cancel_job(pk=job_id, reason=JobReasonEnum.FILL_OUT_FORM)
                     logger.error("❌ Couldn't fill out the form.")
                     return
 
+                print("46")
                 if self._check_questions_have_been_finished():
                     self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY, reason="")
                     logger.error("✅ Job is ready for apply.")
                     return
 
+                print("52")
                 if self._next_step():
                     continue
         except Exception as e:
