@@ -121,7 +121,7 @@ def get_children(
     return root_el.find_elements(By.XPATH, "./*")
 
 
-def click_if_exists(driver, by, selector, index=0, retries: int = 1) -> bool:
+def click_if_exists(driver, by, selector, index=0, retries: int = 5) -> bool:
     """Try to find and click element if clickable. Return True if clicked."""
     for attempt in range(retries + 1):
         try:
