@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Optional, List, Union, Iterable, Tuple
+from typing import Optional, List, Iterable, Tuple
 from contextlib import suppress
 from loguru import logger
 from selenium import webdriver
@@ -20,18 +20,6 @@ from bot.enums import ElementsEnum, WorkTypesEnum
 # ==========================================
 # Page state checks
 # ==========================================
-
-
-def has_no_results(driver) -> bool:
-    return bool(driver.find_elements(By.CLASS_NAME, "jobs-search-no-results-banner"))
-
-
-def has_expired(driver) -> bool:
-    return bool(
-        driver.find_elements(By.XPATH, '//*[text()="No longer accepting applications"]')
-    )
-
-
 def has_exhausted_limit(driver) -> bool:
     xpath = (
         "//*[text()=\"You’ve reached today's Easy Apply limit. "
@@ -57,19 +45,7 @@ def body_has_text(driver, text: str) -> bool:
 # ==========================================
 
 
-def get_children(
-    driver,
-    root: Optional[Union[WebElement, Tuple[str, str]]] = None,
-    by: By = By.XPATH,
-    value: str = "",
-) -> List[WebElement]:
-    """
-    Return direct children of an element.
-
-    - If `root` is a WebElement → get its children.
-    - If `root` is a locator tuple like (By.CLASS_NAME, "foo") → find first and get its children.
-    - If `root` is None → use <body>.
-    """
+def get_children(driver, root) -> List[WebElement]:
     if root is None:
         root_el = driver.find_element(By.TAG_NAME, "body")
     elif isinstance(root, tuple):
