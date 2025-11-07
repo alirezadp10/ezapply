@@ -33,10 +33,8 @@ class JobApplicator:
                         f"Exceeded {settings.MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
                     )
 
-                print("hi")
                 payload = self.parser.parse_form_fields()
 
-                print("30")
                 if payload:
                     items = self._prepare_items_with_embeddings(payload)
                     self._hydrate_answers_from_history(items)
@@ -45,20 +43,17 @@ class JobApplicator:
                     fields = self.filler.fill_fields(payload, items)
                     self._persist_filled_fields(fields, job_id)
 
-                print("39")
                 if self._has_error_icon():
                     self._close_and_discard()
                     self.db.cancel_job(pk=job_id, reason=JobReasonEnum.FILL_OUT_FORM)
                     logger.error("❌ Couldn't fill out the form.")
                     return
 
-                print("46")
                 if self._check_questions_have_been_finished():
                     self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY, reason="")
                     logger.error("✅ Job is ready for apply.")
                     return
 
-                print("52")
                 if self._next_step():
                     continue
         except Exception as e:

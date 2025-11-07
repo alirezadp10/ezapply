@@ -16,6 +16,7 @@ class DriverManager:
         # --- Headless mode (modern flag) ---
         if settings.HEADLESS:
             opts.add_argument("--headless=new")
+            opts.add_argument("--window-size=1920,1080")
 
         # --- Optional incognito ---
         if incognito:
