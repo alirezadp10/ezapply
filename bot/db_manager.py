@@ -150,9 +150,13 @@ class DBManager:
     ) -> Field:
         """Save a new field and its embedding."""
         with self.SessionLocal() as session:
-            field = session.execute(
-                select(Field).where(Field.label == label, Field.value == value)
-            ).scalars().first()
+            field = (
+                session.execute(
+                    select(Field).where(Field.label == label, Field.value == value)
+                )
+                .scalars()
+                .first()
+            )
 
         if field:
             return field
@@ -183,8 +187,7 @@ class DBManager:
         with self.SessionLocal() as session:
             existing = session.execute(
                 select(FieldJob).where(
-                    FieldJob.job_id == job_id,
-                    FieldJob.field_id == field_id
+                    FieldJob.job_id == job_id, FieldJob.field_id == field_id
                 )
             ).scalar_one_or_none()
 
