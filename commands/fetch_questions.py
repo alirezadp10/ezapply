@@ -37,10 +37,13 @@ def main():
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
         get_and_wait_until_loaded(driver, job.url)
         if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
-            db.cancel_job(job.id, "work type mismatch")
+            db.cancel_job(job.id, "Work type mismatch")
+            logger.error("❌ Work type mismatch")
             continue
 
         if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
+            db.cancel_job(job.id, "Couldn't find apply button")
+            logger.error("❌ Couldn't find apply button")
             continue
 
         JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)

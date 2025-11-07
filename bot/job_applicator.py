@@ -24,6 +24,7 @@ class JobApplicator:
     def apply_to_job(self, job_id: int):
         try:
             while True:
+                print("while")
                 payload = self.parser.parse_form_fields()
 
                 if payload:
@@ -41,7 +42,7 @@ class JobApplicator:
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
+                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY, reason="")
                     logger.error("✅ Job is ready for apply.")
                     return
 

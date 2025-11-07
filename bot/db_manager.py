@@ -88,15 +88,9 @@ class DBManager:
             jobs = (
                 session.query(Job)
                 .filter(
-                    Job.applied_at.is_(None),
                     or_(
+                        Job.reason == "Couldn't fill out the form.",
                         Job.status.is_(None),
-                        Job.status.notin_(
-                            [
-                                JobStatusEnum.CANCELED,
-                                JobStatusEnum.READY_FOR_APPLY,
-                            ]
-                        ),
                     ),
                 )
                 .all()
