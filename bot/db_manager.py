@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from loguru import logger
 
 from bot.settings import settings
-from bot.enums import JobStatusEnum
+from bot.enums import JobStatusEnum, JobReasonEnum
 from bot.models import Base, Job, Field
 
 
@@ -89,8 +89,8 @@ class DBManager:
                 session.query(Job)
                 .filter(
                     or_(
-                        Job.reason == "Couldn't fill out the form",
-                        Job.reason == "Couldn't find apply button",
+                        Job.reason == JobReasonEnum.FILL_OUT_FORM,
+                        Job.reason == JobReasonEnum.APPLY_BUTTON,
                         Job.status.is_(None),
                     ),
                 )
