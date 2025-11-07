@@ -4,14 +4,14 @@ import numpy as np
 from contextlib import contextmanager
 from typing import Iterator, Optional, List, cast
 
-from sqlalchemy import create_engine, or_, update
+from sqlalchemy import create_engine, or_, update, select
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
 from loguru import logger
 
 from bot.settings import settings
 from bot.enums import JobStatusEnum, JobReasonEnum
-from bot.models import Base, Job, Field
+from bot.models import Base, Job, Field, FieldJob
 
 
 class DBManager:
@@ -147,22 +147,37 @@ class DBManager:
         value: str,
         type: str,
         embeddings: list[float],
-    ) -> bool:
+    ) -> Field:
         """Save a new field and its embedding."""
         with self.SessionLocal() as session:
-            field = Field(
-                label=label,
-                value=value,
-                type=type,
-                embedding=np.array(embeddings, dtype=np.float32).tobytes(),
-            )
-            session.add(field)
-            return self._commit(session)
+            field = session.execute(
+                select(Field).where(Field.label == label)
+            ).scalar_one_or_none()
+
+        if field:
+            return field
+
+        field = Field(
+            label=label,
+            value=value,
+            type=type,
+            embedding=np.array(embeddings, dtype=np.float32).tobytes(),
+        )
+        session.add(field)
+        self._commit(session)
+        return field
 
     def get_all_fields(self) -> List[Field]:
         """Return all field records."""
         with self.SessionLocal() as session:
             return session.query(Field).all()
+
+    def get_field_by_label(self, label: str) -> Optional["Field"]:
+        """Fetch a Field by label (or None if missing)."""
+        with self.SessionLocal() as session:
+            return session.execute(
+                select(Field).where(Field.label == label)
+            ).scalar_one_or_none()
 
     def get_field_embeddings(self, job_id: Optional[str] = None) -> List[np.ndarray]:
         """Return decoded embeddings for all fields (or specific job)."""
@@ -176,3 +191,13 @@ class DBManager:
                 for f in fields
                 if f.embedding
             ]
+
+    def save_field_job(self, job_id: int, field_id: int) -> bool:
+        with self.SessionLocal() as session:
+            try:
+                session.add(FieldJob(job_id=job_id, field_id=field_id))
+                self._commit(session)
+                return True
+            except IntegrityError:
+                session.rollback()
+                return False

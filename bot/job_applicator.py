@@ -90,13 +90,13 @@ class JobApplicator:
         """
         for field in fields:
             embeddings = AIService.get_embedding(field.label)
-            self.db.save_field(
+            saved_field = self.db.save_field(
                 label=field.label,
                 value=field.answer,
                 type=field.type,
                 embeddings=embeddings,
-                job_id=job_id,
             )
+            self.db.save_field_job(field_id=saved_field.id, job_id=job_id)
 
     # Answer pipeline ----------------------------------------------------------
 
