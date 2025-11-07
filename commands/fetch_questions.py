@@ -34,8 +34,8 @@ def main():
 
     jobs = db.get_not_applied_jobs()
     for job in jobs:
-        time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
         get_and_wait_until_loaded(driver, job.url)
+        time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
 
         if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
             db.cancel_job(job.id, JobReasonEnum.WORK_TYPE_MISMATCH)

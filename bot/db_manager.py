@@ -4,7 +4,7 @@ import numpy as np
 from contextlib import contextmanager
 from typing import Iterator, Optional, List, cast
 
-from sqlalchemy import create_engine, or_, update, delete
+from sqlalchemy import create_engine, or_, update
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
 from loguru import logger
@@ -128,22 +128,6 @@ class DBManager:
         """Mark a job as canceled."""
         return self.update_job_status(pk, JobStatusEnum.CANCELED, reason)
 
-    def delete_job(self, pk: int, soft: bool = True) -> bool:
-        """
-        Delete a job record.
-        If soft=True, mark as deleted. Otherwise, remove permanently.
-        """
-        with self.SessionLocal() as session:
-            if soft:
-                stmt = (
-                    update(Job).where(Job.id == pk).values(status=JobStatusEnum.DELETED)
-                )
-                session.execute(stmt)
-            else:
-                stmt = delete(Job).where(Job.id == pk)
-                session.execute(stmt)
-            return self._commit(session)
-
     def is_applied_for_job(self, job_id: str) -> bool:
         """Check if a job has been applied for (not failed)."""
         with self.SessionLocal() as session:
@@ -163,7 +147,6 @@ class DBManager:
         value: str,
         type: str,
         embeddings: list[float],
-        job_id: str,
     ) -> bool:
         """Save a new field and its embedding."""
         with self.SessionLocal() as session:
@@ -172,7 +155,6 @@ class DBManager:
                 value=value,
                 type=type,
                 embedding=np.array(embeddings, dtype=np.float32).tobytes(),
-                job_id=job_id,
             )
             session.add(field)
             return self._commit(session)
