@@ -179,25 +179,18 @@ class DBManager:
                 select(Field).where(Field.label == label)
             ).scalar_one_or_none()
 
-    def get_field_embeddings(self, job_id: Optional[str] = None) -> List[np.ndarray]:
-        """Return decoded embeddings for all fields (or specific job)."""
-        with self.SessionLocal() as session:
-            query = session.query(Field)
-            if job_id:
-                query = query.filter(Field.job_id == job_id)
-            fields = query.all()
-            return [
-                np.frombuffer(f.embedding, dtype=np.float32)
-                for f in fields
-                if f.embedding
-            ]
-
     def save_field_job(self, job_id: int, field_id: int) -> bool:
         with self.SessionLocal() as session:
-            try:
-                session.add(FieldJob(job_id=job_id, field_id=field_id))
-                self._commit(session)
-                return True
-            except IntegrityError:
-                session.rollback()
+            existing = session.execute(
+                select(FieldJob).where(
+                    FieldJob.job_id == job_id,
+                    FieldJob.field_id == field_id
+                )
+            ).scalar_one_or_none()
+
+            if existing:
                 return False
+
+            field_job = FieldJob(job_id=job_id, field_id=field_id)
+            session.add(field_job)
+            return self._commit(session)
