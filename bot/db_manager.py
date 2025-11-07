@@ -151,7 +151,7 @@ class DBManager:
         """Save a new field and its embedding."""
         with self.SessionLocal() as session:
             field = session.execute(
-                select(Field).where(Field.label == label)
+                select(Field).where(Field.label == label, Field.value == value)
             ).scalar_one_or_none()
 
         if field:
