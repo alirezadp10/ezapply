@@ -152,7 +152,7 @@ class DBManager:
         with self.SessionLocal() as session:
             field = session.execute(
                 select(Field).where(Field.label == label, Field.value == value)
-            ).scalar_one_or_none()
+            ).scalars().first()
 
         if field:
             return field
