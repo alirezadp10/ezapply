@@ -1,4 +1,5 @@
 import os
+import random
 import time
 from typing import Optional, List, Union, Iterable, Tuple
 from contextlib import suppress
@@ -132,6 +133,7 @@ def click_if_exists(driver, by, selector, index=0, retries: int = 1) -> bool:
                     return True
             return False
         except Exception:
+            time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
             if attempt == retries:
                 return False
     return False
