@@ -52,6 +52,7 @@ def main():
             logger.error("❌ Couldn't find apply button.")
             continue
 
+        logger.info(f"✅ Processing job #{job.id}")
         JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
 
 if __name__ == "__main__":

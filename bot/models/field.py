@@ -10,6 +10,5 @@ class Field(Base):
     label = Column(String(255))
     value = Column(String(255))
     type = Column(String(20))
-    job_id = Column(String(20))
     embedding = Column(LargeBinary, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
