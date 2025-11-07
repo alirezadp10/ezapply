@@ -1,4 +1,3 @@
-import os
 import random
 import time
 from typing import Optional, List, Union, Iterable, Tuple
@@ -15,47 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from bot.settings import settings
-from bot.enums import Country, ElementsEnum, WorkTypesEnum
-
-
-# ==========================================
-# Basic helpers
-# ==========================================
-
-
-def split_csv(value: Optional[str]) -> List[str]:
-    """Split a comma-separated string into a cleaned list."""
-    if not value:
-        return []
-    return [p.strip() for p in value.split(",") if p.strip()]
-
-
-def read_test_job_ids() -> List[str]:
-    """Read comma-separated job IDs from TEST_WITH env var."""
-    return split_csv(os.getenv("TEST_WITH", ""))
-
-
-def resolve_countries() -> List[str]:
-    """Return configured countries or all from Country enum."""
-    configured = split_csv(getattr(settings, "COUNTRIES", None))
-    return [c.upper() for c in configured] if configured else [c.name for c in Country]
-
-
-def resolve_keywords() -> List[str]:
-    """Return configured keywords."""
-    keywords = split_csv(getattr(settings, "KEYWORDS", None))
-    if not keywords:
-        logger.warning("⚠️ No KEYWORDS configured; nothing to search for.")
-    return keywords
-
-
-def country_value(country_name: str) -> str:
-    """Get Country enum value or raise ValueError."""
-    try:
-        return Country[country_name.upper()].value
-    except KeyError as e:
-        valid = ", ".join([c.name for c in Country])
-        raise ValueError(f"Unknown country '{country_name}'. Valid: {valid}") from e
+from bot.enums import ElementsEnum, WorkTypesEnum
 
 
 # ==========================================
@@ -121,10 +80,12 @@ def get_children(
     return root_el.find_elements(By.XPATH, "./*")
 
 
-def click_if_exists(driver, by, selector, index=0, retries: int = 5) -> bool:
+def click_if_exists(driver, by, selector, index=0, retries=5) -> bool:
     """Try to find and click element if clickable. Return True if clicked."""
     for attempt in range(retries + 1):
         try:
+            if selector == "jobs-apply-button":
+                print("hi")
             driver.find_elements(by, selector)[index].click()
             return True
         except Exception:

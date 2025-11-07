@@ -1,16 +1,15 @@
 import time
 import random
+from typing import List, Optional
+
 from loguru import logger
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
 from bot.driver_manager import DriverManager
 from bot.db_manager import DBManager
-from bot.enums import ModesEnum, ElementsEnum
+from bot.enums import ModesEnum, ElementsEnum, Country
 from bot.helpers import (
-    resolve_countries,
-    resolve_keywords,
-    country_value,
     click_if_exists,
     body_has_text,
     has_offsite_apply_icon,
@@ -22,12 +21,13 @@ from bot.helpers import (
     get_and_wait_until_loaded,
 )
 from bot.logger_manager import setup_logger
+from bot.settings import settings
 
 
 def explore_jobs(driver, db, countries, keywords):
     """Explore job listings for all countries and keywords."""
     for country in countries:
-        country_val = country_value(country)
+        country_val = _country_value(country)
         for keyword in keywords:
             try:
                 logger.info(f"🔍 Exploring: keyword='{keyword}', country='{country}'")
@@ -112,14 +112,40 @@ def process_job_item(driver, db, job_item, country, keyword):
         logger.exception(f"💾 Failed saving job {job_id}: {e}")
 
 
+def _country_value(country_name: str) -> str:
+    try:
+        return Country[country_name.upper()].value
+    except KeyError as e:
+        valid = ", ".join([c.name for c in Country])
+        raise ValueError(f"Unknown country '{country_name}'. Valid: {valid}") from e
+
+
+def _resolve_keywords() -> List[str]:
+    keywords = _split_csv(settings.KEYWORDS)
+    if not keywords:
+        logger.warning("⚠️ No KEYWORDS configured; nothing to search for.")
+    return keywords
+
+
+def _resolve_countries() -> List[str]:
+    configured = _split_csv(settings.COUNTRIES)
+    return [c.upper() for c in configured] if configured else [c.name for c in Country]
+
+
+def _split_csv(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    return [p.strip() for p in value.split(",") if p.strip()]
+
+
 def main():
     setup_logger()
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.EXPLORE}")
     driver = DriverManager.create_driver(incognito=True)
     db = DBManager()
 
-    countries = resolve_countries()
-    keywords = resolve_keywords()
+    countries = _resolve_countries()
+    keywords = _resolve_keywords()
 
     try:
         explore_jobs(driver, db, countries, keywords)
