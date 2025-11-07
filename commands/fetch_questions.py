@@ -43,10 +43,7 @@ def main():
         if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1):
             continue
 
-        try:
-            JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
-        except Exception as e:
-            logger.error(e)
+        JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
 
 if __name__ == "__main__":
     main()

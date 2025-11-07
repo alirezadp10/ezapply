@@ -1,6 +1,8 @@
 from __future__ import annotations
 import numpy as np
 from typing import List, Dict
+
+from loguru import logger
 from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
@@ -20,33 +22,35 @@ class JobApplicator:
         self.filler = FormFiller(driver)
 
     def apply_to_job(self, job_id: int):
-        while True:
-            payload = self.parser.parse_form_fields()
+        try:
+            while True:
+                payload = self.parser.parse_form_fields()
 
-            if payload:
-                items = self._prepare_items_with_embeddings(payload)
-                self._hydrate_answers_from_history(items)
-                ai_answers = self._generate_ai_answers_for_unanswered(items)
-                # Merge AI answers into items
-                self._merge_ai_answers(items, ai_answers)
+                if payload:
+                    items = self._prepare_items_with_embeddings(payload)
+                    self._hydrate_answers_from_history(items)
+                    ai_answers = self._generate_ai_answers_for_unanswered(items)
+                    self._merge_ai_answers(items, ai_answers)
+                    fields = self.filler.fill_fields(payload, items)
+                    self._persist_filled_fields(fields, job_id)
 
-                # Fill and persist
-                fields = self.filler.fill_fields(payload, items)
-                self._persist_filled_fields(fields, job_id)
+                if self._has_error_icon():
+                    self._close_and_discard()
+                    self.db.cancel_job(pk=job_id, reason="Couldn't fill out the form.")
+                    logger.error("❌ Couldn't fill out the form.")
+                    return
 
-            # Early surface of form-level errors
-            if self._has_error_icon():
-                self._close_and_discard()
-                self.db.cancel_job(pk=job_id, reason="Couldn't fill out the form.")
-                return
+                if self._check_questions_have_been_finished():
+                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
+                    logger.error("✅ Job is ready for apply.")
+                    return
 
-            if self._check_questions_have_been_finished():
-                self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
-                return
+                if self._next_step():
+                    continue
+        except Exception as e:
+            logger.error(f"❌ {str(e)}")
+            return
 
-            # Otherwise continue/review
-            if self._next_step():
-                continue
 
     def _next_step(self) -> bool:
         """
