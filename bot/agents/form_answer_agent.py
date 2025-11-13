@@ -34,6 +34,6 @@ class FormAnswerAgent:
                 system_prompt=ASK_FORM_SYSTEM_PROMPT,
                 output_type=list,
             )
-            .agent.run_sync(prompt)
+            .run_sync(prompt)
             .output
         )

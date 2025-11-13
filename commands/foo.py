@@ -11,7 +11,7 @@ def main():
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
     db = DBManager()
 
-    jobs = db.get_not_applied_jobs()
+    db.get_not_applied_jobs()
 
 
 if __name__ == "__main__":

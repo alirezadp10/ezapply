@@ -2,8 +2,9 @@ import os
 
 from loguru import logger
 
-LOG_DIR = "logs"
-LOG_FILE = os.path.join(LOG_DIR, "bot.log")
+from bot.settings import settings
+
+LOG_FILE = os.path.join(settings.LOG_DIR, "bot.log")
 
 
 def setup_logger():
@@ -14,8 +15,8 @@ def setup_logger():
     - Enables daily rotation and retention.
     """
     # Create log directory if missing
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
+    if not os.path.exists(settings.LOG_DIR):
+        os.makedirs(settings.LOG_DIR)
 
     # Remove default logger configuration to avoid duplicates
     logger.remove()
