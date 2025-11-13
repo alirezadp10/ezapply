@@ -19,6 +19,7 @@ from bot.helpers import (
     safe_action,
     safe_find_element,
     get_and_wait_until_loaded,
+    navigated_to_single_page,
 )
 from bot.logger_manager import setup_logger
 from bot.settings import settings
@@ -76,6 +77,10 @@ def process_job_item(driver, db, job_item, country, keyword):
     if not click_with_rate_limit_checking(driver, job_item):
         logger.debug("⏳ Skipped job due to rate limit or click failure.")
         return
+
+    # if navigated_to_single_page(driver):
+    #     driver.navigate().back()
+    #     return
 
     if has_offsite_apply_icon(driver):
         logger.info("🔗 Skipped offsite application.")

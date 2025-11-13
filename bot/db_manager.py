@@ -69,6 +69,16 @@ class DBManager:
         keyword: str,
         url: str,
     ) -> bool:
+        with self.SessionLocal() as session:
+            job = (
+                session.execute(select(Job).where(Job.job_id == job_id))
+                .scalars()
+                .first()
+            )
+
+        if job:
+            return False
+
         """Insert a new job record."""
         with self.SessionLocal() as session:
             job = Job(

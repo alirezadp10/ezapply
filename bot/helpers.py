@@ -33,6 +33,10 @@ def has_offsite_apply_icon(driver) -> bool:
     """Check if page has offsite apply icon."""
     return bool(driver.find_elements(By.CSS_SELECTOR, ElementsEnum.OFFSITE_APPLY_ICON))
 
+def navigated_to_single_page(driver) -> bool:
+    """Check if page has offsite apply icon."""
+    return bool(body_has_text(driver, "People also viewed"))
+
 
 def body_has_text(driver, text: str) -> bool:
     """Return True if the given text is present in <body>."""
