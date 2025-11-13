@@ -19,7 +19,6 @@ from bot.helpers import (
     safe_action,
     safe_find_element,
     get_and_wait_until_loaded,
-    navigated_to_single_page,
 )
 from bot.logger_manager import setup_logger
 from bot.settings import settings
@@ -104,7 +103,7 @@ def process_job_item(driver, db, job_item, country, keyword):
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
     try:
-        db.save_job(
+        status = db.save_job(
             job_id=job_id,
             title=title,
             description=description,
@@ -112,7 +111,11 @@ def process_job_item(driver, db, job_item, country, keyword):
             keyword=keyword,
             url=link,
         )
-        logger.success(f"✅ Saved job: #{job_id} '{title}' ({country}, {keyword})")
+        if status:
+            logger.success(f"✅ Saved job: #{job_id} '{title}' ({country}, {keyword})")
+        else:
+            logger.info(f"💾 This job has already been saved: {job_id}")
+
     except Exception as e:
         logger.exception(f"💾 Failed saving job {job_id}: {e}")
 
