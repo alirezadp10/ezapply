@@ -24,12 +24,14 @@ class Settings:
     KEYWORDS: str = os.getenv("KEYWORDS", "laravel,python,go")
     COUNTRIES: str = os.getenv("COUNTRIES")
 
-    DEEPINFRA_API_URL: str = os.getenv("DEEPINFRA_API_URL", "https://api.deepinfra.com/v1/openai/chat/completions")
     DEEPINFRA_EMBEDDING_API_URL: str = os.getenv(
         "DEEPINFRA_EMBEDDING_API_URL", "https://api.deepinfra.com/v1/inference/google/embeddinggemma-300m"
     )
-    DEEPINFRA_MODEL_NAME: str = os.getenv("DEEPINFRA_MODEL_NAME", "meta-llama/Meta-Llama-3-8B-Instruct")
     DEEPINFRA_API_KEY: str = os.getenv("DEEPINFRA_API_KEY")
+
+    OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "openai:meta-llama/llama-3.3-8b-instruct:free")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
 
 
 settings = Settings()
