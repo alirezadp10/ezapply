@@ -9,7 +9,7 @@ from bot.authentication import Authentication
 from bot.settings import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
-from bot.enums import ModesEnum, JobReasonEnum, ElementsEnum
+from bot.enums import ModesEnum, JobStatusEnum
 from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
 from bot.job_applicator import JobApplicator
 from bot.logger_manager import setup_logger
@@ -38,25 +38,30 @@ def main():
         time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
 
         if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
-            db.cancel_job(job.id, JobReasonEnum.WORK_TYPE_MISMATCH)
+            db.update_job_status(job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
             logger.error("❌ Work type mismatch.")
             continue
 
         if body_has_text(driver, "No longer accepting applications"):
-            db.cancel_job(job.id, JobReasonEnum.EXPIRED)
+            db.update_job_status(job.id, JobStatusEnum.EXPIRED)
             logger.error("❌ Request has been expired.")
             continue
 
-        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
-            db.cancel_job(job.id, JobReasonEnum.APPLY_BUTTON)
+        if not click_if_exists(
+            driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5
+        ):
+            db.update_job_status(job.id, JobStatusEnum.APPLY_BUTTON)
             logger.error("❌ Couldn't find apply button.")
             continue
 
         if body_has_text(driver, "Job search safety reminder"):
-            driver.find_element(By.CSS_SELECTOR, "[data-live-test-job-apply-button]").click()
+            driver.find_element(
+                By.CSS_SELECTOR, "[data-live-test-job-apply-button]"
+            ).click()
 
         logger.info(f"🔎 Processing job #{job.id}")
         JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
+
 
 if __name__ == "__main__":
     main()

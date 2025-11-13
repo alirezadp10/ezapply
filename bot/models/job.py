@@ -14,8 +14,6 @@ class Job(Base):
     country = Column(String(50))
     keyword = Column(String(50))
     url = Column(String(50))
-    alignment = Column(Integer, nullable=True)
     status = Column(String(10), nullable=True)
-    reason = Column(String(255), nullable=True)
     applied_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

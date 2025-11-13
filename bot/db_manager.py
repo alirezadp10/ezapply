@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from loguru import logger
 
 from bot.settings import settings
-from bot.enums import JobStatusEnum, JobReasonEnum
+from bot.enums import JobStatusEnum
 from bot.models import Base, Job, Field, FieldJob
 
 
@@ -99,8 +99,8 @@ class DBManager:
                 session.query(Job)
                 .filter(
                     or_(
-                        Job.reason == JobReasonEnum.FILL_OUT_FORM,
-                        Job.reason == JobReasonEnum.APPLY_BUTTON,
+                        Job.status == JobStatusEnum.FILL_OUT_FORM,
+                        Job.status == JobStatusEnum.APPLY_BUTTON,
                         Job.status.is_(None),
                     ),
                 )
@@ -125,28 +125,12 @@ class DBManager:
         with self.SessionLocal() as session:
             return session.query(Job).filter(Job.status == status).all()
 
-    def update_job_status(
-        self, pk: int, status: JobStatusEnum, reason: Optional[str] = None
-    ) -> bool:
+    def update_job_status(self, pk: int, status: JobStatusEnum) -> bool:
         """Update a job's status and optional reason."""
         with self.SessionLocal() as session:
-            stmt = update(Job).where(Job.id == pk).values(status=status, reason=reason)
+            stmt = update(Job).where(Job.id == pk).values(status=status)
             session.execute(stmt)
             return self._commit(session)
-
-    def cancel_job(self, pk: int, reason: str) -> bool:
-        """Mark a job as canceled."""
-        return self.update_job_status(pk, JobStatusEnum.CANCELED, reason)
-
-    def is_applied_for_job(self, job_id: str) -> bool:
-        """Check if a job has been applied for (not failed)."""
-        with self.SessionLocal() as session:
-            job = (
-                session.query(Job)
-                .filter(Job.job_id == job_id, Job.status != JobStatusEnum.FAILED)
-                .first()
-            )
-            return job is not None
 
     # ----------------------------------------------------- #
     # Field operations

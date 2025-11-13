@@ -6,7 +6,7 @@ from loguru import logger
 from selenium.webdriver.common.by import By
 from bot.ai_service import AIService
 from bot.embedding_manager import EmbeddingManager
-from bot.enums import ElementsEnum, JobStatusEnum, JobReasonEnum
+from bot.enums import ElementsEnum, JobStatusEnum
 from bot.exceptions import JobApplyError
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
@@ -45,12 +45,12 @@ class JobApplicator:
 
                 if self._has_error_icon():
                     self._close_and_discard()
-                    self.db.cancel_job(pk=job_id, reason=JobReasonEnum.FILL_OUT_FORM)
+                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.FILL_OUT_FORM)
                     logger.error("❌ Couldn't fill out the form.")
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY, reason="")
+                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
                     logger.error("✅ Job is ready for apply.")
                     return
 
