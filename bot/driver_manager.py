@@ -25,7 +25,7 @@ class DriverManager:
 
         # --- User profile directory setup ---
         normalized_profile = DriverManager._normalize_profile_name(profile)
-        base_dir = Path(__file__).resolve().parent.parent / "storages/profiles"
+        base_dir = Path(__file__).resolve().parent.parent / "storage/profiles"
         profile_dir = base_dir / normalized_profile if normalized_profile else Path(settings.USER_DATA_DIR)
         profile_dir.mkdir(parents=True, exist_ok=True)
 
