@@ -5,7 +5,7 @@ import random
 from loguru import logger
 from selenium.webdriver.common.by import By
 
-from bot.authentication import Authentication
+from bot.services import AuthenticationService
 from bot.settings import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
@@ -30,7 +30,7 @@ def main():
     driver = DriverManager.create_driver(profile=args.username)
     db = DBManager()
 
-    Authentication(driver).login(username=args.username, password=args.password)
+    AuthenticationService(driver).login(username=args.username, password=args.password)
 
     jobs = db.get_not_applied_jobs()
     for job in jobs:

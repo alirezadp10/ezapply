@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class NormalizedJob(BaseModel):
+class NormalizedJobSchema(BaseModel):
     title: Optional[str] = None
     seniority: Optional[str] = None
     technologies: List[str] = Field(default_factory=list)

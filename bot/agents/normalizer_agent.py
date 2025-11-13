@@ -1,5 +1,6 @@
 from pydantic_ai import Agent
-from bot.dto import NormalizerOutput
+
+from bot.schemas import NormalizerOutputSchema
 from bot.settings import settings
 
 NORMALIZER_SYSTEM_PROMPT = """
@@ -27,24 +28,28 @@ Your output MUST follow this structure:
 """
 
 
-def normalize_data(job_title: str, job_description: str) -> NormalizerOutput:
-    prompt = f"""
+class NormalizerAgent:
+    @staticmethod
+    def ask(job_title: str, job_description: str) -> NormalizerOutputSchema:
+        prompt = f"""
         JOB TITLE:
         {job_title}
-    
+
         JOB DESCRIPTION:
         {job_description}
-    
+
         CANDIDATE PROFILE:
         {settings.USER_INFORMATION}
-    
+
         Extract and normalize both job and candidate.
         """
 
-    normalizer_agent = Agent(
-        model=settings.OPENAI_MODEL_NAME,
-        system_prompt=NORMALIZER_SYSTEM_PROMPT,
-        output_type=NormalizerOutput,
-    )
-
-    return normalizer_agent.run_sync(prompt).output
+        return (
+            Agent(
+                model=settings.OPENAI_MODEL_NAME,
+                system_prompt=NORMALIZER_SYSTEM_PROMPT,
+                output_type=NormalizerOutputSchema,
+            )
+            .run_sync(prompt)
+            .output
+        )

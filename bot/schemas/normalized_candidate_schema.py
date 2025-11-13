@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class NormalizedCandidate(BaseModel):
+class NormalizedCandidateSchema(BaseModel):
     name: Optional[str] = None
     experience_years: Optional[int] = None
     primary_languages: List[str] = Field(default_factory=list)

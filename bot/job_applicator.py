@@ -4,14 +4,15 @@ from typing import List, Dict
 
 from loguru import logger
 from selenium.webdriver.common.by import By
-from bot.ai_service import AIService
-from bot.embedding_manager import EmbeddingManager
+
+from bot.agents import FormAnswerAgent
 from bot.enums import ElementsEnum, JobStatusEnum
 from bot.exceptions import JobApplyError
 from bot.form_parser import FormParser
 from bot.form_filler import FormFiller
-from bot.dto import FormItemDTO
+from bot.schemas import FormItemSchema
 from bot.helpers import click_if_exists
+from bot.services import EmbeddingService
 from bot.settings import settings
 
 
@@ -20,7 +21,6 @@ class JobApplicator:
         self.driver = driver
         self.db = db
         self.parser = FormParser(driver)
-        self.embedding_manager = EmbeddingManager()
         self.filler = FormFiller(driver)
 
     def apply_to_job(self, job_id: int):
@@ -84,12 +84,12 @@ class JobApplicator:
 
     # Data/DB helpers ----------------------------------------------------------
 
-    def _persist_filled_fields(self, fields: List[FormItemDTO], job_id: int) -> None:
+    def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: int) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
         """
         for field in fields:
-            embeddings = AIService.get_embedding(field.label)
+            embeddings = EmbeddingService.get_embedding(field.label)
             saved_field = self.db.save_field(
                 label=field.label,
                 value=field.answer,
@@ -102,17 +102,17 @@ class JobApplicator:
 
     def _prepare_items_with_embeddings(
         self, payload: List[Dict[str, str]]
-    ) -> List[FormItemDTO]:
+    ) -> List[FormItemSchema]:
         """
-        Takes raw parsed payload -> FormItemDTO list, computes and attaches embeddings (float32 bytes).
+        Takes raw parsed payload -> FormItemSchema list, computes and attaches embeddings (float32 bytes).
         """
-        items = [FormItemDTO.from_payload_entry(p) for p in payload]
+        items = [FormItemSchema.from_payload_entry(p) for p in payload]
         for item in items:
-            emb = AIService.get_embedding(item.label)
+            emb = EmbeddingService.get_embedding(item.label)
             item.embeddings = np.asarray(emb, dtype=np.float32).tobytes()
         return items
 
-    def _hydrate_answers_from_history(self, items: List["FormItemDTO"]) -> None:
+    def _hydrate_answers_from_history(self, items: List["FormItemSchema"]) -> None:
         """
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
@@ -125,10 +125,10 @@ class JobApplicator:
         if not historical or not items:
             return
 
-        self.embedding_manager.fill_out_items(items, historical)
+        EmbeddingService.fill_out_items(items, historical)
 
     def _generate_ai_answers_for_unanswered(
-        self, items: List[FormItemDTO]
+        self, items: List[FormItemSchema]
     ) -> List[Dict[str, str]]:
         """
         Calls AI service for only unanswered items. Returns AI-produced answers
@@ -137,10 +137,10 @@ class JobApplicator:
         unanswered = [{"label": i.label, "answer": ""} for i in items if not i.answer]
         if not unanswered:
             return []
-        return AIService.ask_form_answers(unanswered)
+        return FormAnswerAgent.ask(unanswered)
 
     def _merge_ai_answers(
-        self, items: List[FormItemDTO], ai_answers: List[Dict[str, str]]
+        self, items: List[FormItemSchema], ai_answers: List[Dict[str, str]]
     ) -> None:
         """
         Merge AI answers into items in-place by label.

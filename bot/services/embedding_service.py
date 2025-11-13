@@ -1,29 +1,77 @@
 from __future__ import annotations
-from typing import List, Iterable, Tuple
-import numpy as np
-
+import requests
+from typing import List
+from loguru import logger
 from bot.settings import settings
-from bot.dto import FormItemDTO
+from typing import Iterable, Tuple
+import numpy as np
+from bot.schemas import FormItemSchema
 
 
-class EmbeddingManager:
-    def fill_out_items(
-        self, items: List["FormItemDTO"], historical: list
-    ) -> None:
+class EmbeddingService:
+    _SESSION = None
+    _TIMEOUT = 60
+
+    @staticmethod
+    def get_embedding(text: str) -> List[float]:
+        """
+        Best-practice embedding fetch (non-agent).
+        Returns [] on failure.
+        """
+        try:
+            resp = EmbeddingService._session().post(
+                settings.DEEPINFRA_EMBEDDING_API_URL,
+                json={"inputs": [text]},
+                timeout=EmbeddingService._TIMEOUT,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            # DeepInfra returns {"embeddings": [[...]]} or {"embeddings": [...]}
+            emb = data.get("embeddings", [])
+            if isinstance(emb, list) and len(emb) == 1:
+                return emb[0]  # unwrap the 2D list
+
+            return emb
+
+        except Exception as e:
+            logger.warning(f"⚠️ Embedding fetch failed: {e}")
+            return []
+
+    @classmethod
+    def _session(cls) -> requests.Session:
+        if cls._SESSION is None:
+            cls._SESSION = requests.Session()
+            cls._SESSION.headers.update(
+                {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
+                }
+            )
+        return cls._SESSION
+
+    @staticmethod
+    def fill_out_items(items: List["FormItemSchema"], historical: list) -> None:
         """
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
         """
 
         # Build matrices: query (n x d) and historical (m x d), keeping row indices
-        q_mat, kept_q = self._stack_embeddings([i.embeddings for i in items])  # (n, d)
-        h_mat, kept_h = self._stack_embeddings([f.embedding for f in historical])  # (m, d)
+        q_mat, kept_q = EmbeddingService._stack_embeddings(
+            [i.embeddings for i in items]
+        )  # (n, d)
+        h_mat, kept_h = EmbeddingService._stack_embeddings(
+            [f.embedding for f in historical]
+        )  # (m, d)
 
         if q_mat.size == 0 or h_mat.size == 0:
             return
 
         # Cosine similarity matrix (n x m)
-        sim = self._cosine_similarity_matrix(q_mat, h_mat)  # values in [-1, 1]
+        sim = EmbeddingService._cosine_similarity_matrix(
+            q_mat, h_mat
+        )  # values in [-1, 1]
 
         # For each query, take the best historical match
         best_idx = sim.argmax(axis=1)  # (n,)
@@ -36,7 +84,8 @@ class EmbeddingManager:
                 item_i = kept_q[row_i]
                 items[item_i].answer = historical[hist_j].value
 
-    def _stack_embeddings(self, blobs: Iterable[bytes]) -> Tuple[np.ndarray, List[int]]:
+    @staticmethod
+    def _stack_embeddings(blobs: Iterable[bytes]) -> Tuple[np.ndarray, List[int]]:
         """
         From an iterable of float32 byte blobs -> (N, D) float32 array and the list of kept indices.
 
@@ -67,8 +116,9 @@ class EmbeddingManager:
         mat = np.vstack(mats).astype(np.float32, copy=False)
         return mat, list(kept_idx)
 
+    @staticmethod
     def _cosine_similarity_matrix(
-        self, a: np.ndarray, b: np.ndarray, *, out_dtype=np.float32, eps: float = 1e-12
+        a: np.ndarray, b: np.ndarray, *, out_dtype=np.float32, eps: float = 1e-12
     ) -> np.ndarray:
         """
         Pairwise cosine similarity between rows of A (n x d) and B (m x d) -> (n x m).

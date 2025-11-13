@@ -14,7 +14,7 @@ from bot.helpers import (
 )
 
 
-class Authentication:
+class AuthenticationService:
     """Handles LinkedIn login flow with retry and safety wrappers."""
 
     def __init__(self, driver):
