@@ -4,10 +4,10 @@ from loguru import logger
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from bot.enums import ElementsEnum
-from bot.helpers import find_elements
+from bot.helpers.helpers import find_elements
 
 
-class FormParser:
+class FormParserService:
     def __init__(self, driver):
         self.driver = driver
 

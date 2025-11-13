@@ -15,7 +15,7 @@ from bot.enums import ElementsEnum
 from bot.schemas import FormItemSchema
 
 
-class FormFiller:
+class FormFillerService:
     def __init__(self, driver, wait_seconds: int = 10):
         self.driver = driver
         self.wait = WebDriverWait(driver, wait_seconds)

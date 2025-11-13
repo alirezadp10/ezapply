@@ -8,20 +8,18 @@ from selenium.webdriver.common.by import By
 from bot.agents import FormAnswerAgent
 from bot.enums import ElementsEnum, JobStatusEnum
 from bot.exceptions import JobApplyError
-from bot.form_parser import FormParser
-from bot.form_filler import FormFiller
+from bot.helpers.helpers import click_if_exists
 from bot.schemas import FormItemSchema
-from bot.helpers import click_if_exists
-from bot.services import EmbeddingService
+from bot.services import EmbeddingService, FormParserService, FormFillerService
 from bot.settings import settings
 
 
-class JobApplicator:
+class JobApplicatorService:
     def __init__(self, driver, db):
         self.driver = driver
         self.db = db
-        self.parser = FormParser(driver)
-        self.filler = FormFiller(driver)
+        self.parser = FormParserService(driver)
+        self.filler = FormFillerService(driver)
 
     def apply_to_job(self, job_id: int):
         try:

@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.common import WebDriverException
 
 from bot.settings import settings
-from bot.helpers import (
+from bot.helpers.helpers import (
     safe_find_element,
     safe_action,
     click_if_exists,

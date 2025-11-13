@@ -6,7 +6,7 @@ load_dotenv()
 
 @dataclass
 class Settings:
-    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "sqlite:///./data.db")
+    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "sqlite:///./storages/data.db")
     HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
     USER_DATA_DIR: str = os.getenv("USER_DATA_DIR", "/tmp/chrome-user-data")
     DELAY_TIME: int = int(os.getenv("DELAY_TIME", 5))
