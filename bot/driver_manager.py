@@ -32,13 +32,16 @@ class DriverManager:
         # --- Create driver ---
         driver = uc.Chrome(options=opts, user_data_dir=profile_dir)
         driver.maximize_window()
-        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": """
+        driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {
+                "source": """
             Object.defineProperty(navigator, 'webdriver', {
               get: () => undefined
             })
           """
-        })
+            },
+        )
         return driver
 
     @staticmethod

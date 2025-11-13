@@ -19,9 +19,7 @@ class DBManager:
 
     def __init__(self):
         self.engine = create_engine(settings.SQLITE_DB_PATH, echo=False, future=True)
-        self.SessionLocal = sessionmaker(
-            bind=self.engine, expire_on_commit=False, class_=Session
-        )
+        self.SessionLocal = sessionmaker(bind=self.engine, expire_on_commit=False, class_=Session)
         Base.metadata.create_all(self.engine)
 
     # ----------------------------------------------------- #
@@ -70,11 +68,7 @@ class DBManager:
         url: str,
     ) -> bool:
         with self.SessionLocal() as session:
-            job = (
-                session.execute(select(Job).where(Job.job_id == job_id))
-                .scalars()
-                .first()
-            )
+            job = session.execute(select(Job).where(Job.job_id == job_id)).scalars().first()
 
         if job:
             return False
@@ -108,9 +102,7 @@ class DBManager:
             )
             return cast(list[Job], jobs)
 
-    def get_job_by_id(
-        self, job_id: Optional[str] = None, pk: Optional[int] = None
-    ) -> Optional[Job]:
+    def get_job_by_id(self, job_id: Optional[str] = None, pk: Optional[int] = None) -> Optional[Job]:
         """Fetch a single job by its primary key or LinkedIn job_id."""
         if not job_id and not pk:
             raise ValueError("You must provide either job_id or pk")
@@ -144,13 +136,7 @@ class DBManager:
     ) -> Field:
         """Save a new field and its embedding."""
         with self.SessionLocal() as session:
-            field = (
-                session.execute(
-                    select(Field).where(Field.label == label, Field.value == value)
-                )
-                .scalars()
-                .first()
-            )
+            field = session.execute(select(Field).where(Field.label == label, Field.value == value)).scalars().first()
 
         if field:
             return field
@@ -173,16 +159,12 @@ class DBManager:
     def get_field_by_label(self, label: str) -> Optional["Field"]:
         """Fetch a Field by label (or None if missing)."""
         with self.SessionLocal() as session:
-            return session.execute(
-                select(Field).where(Field.label == label)
-            ).scalar_one_or_none()
+            return session.execute(select(Field).where(Field.label == label)).scalar_one_or_none()
 
     def save_field_job(self, job_id: int, field_id: int) -> bool:
         with self.SessionLocal() as session:
             existing = session.execute(
-                select(FieldJob).where(
-                    FieldJob.job_id == job_id, FieldJob.field_id == field_id
-                )
+                select(FieldJob).where(FieldJob.job_id == job_id, FieldJob.field_id == field_id)
             ).scalar_one_or_none()
 
             if existing:

@@ -34,6 +34,7 @@ def has_offsite_apply_icon(driver) -> bool:
     """Check if page has offsite apply icon."""
     return bool(driver.find_elements(By.CSS_SELECTOR, ElementsEnum.OFFSITE_APPLY_ICON))
 
+
 def navigated_to_single_page(driver) -> bool:
     """Check if page has offsite apply icon."""
     return bool(body_has_text(driver, "People also viewed"))
@@ -94,13 +95,7 @@ def click_with_rate_limit_checking(driver, job_item, delay=2) -> bool:
         requests = getattr(driver, "requests", [])[index:]
         for req in requests:
             resp = getattr(req, "response", None)
-            if (
-                resp
-                and (
-                    getattr(resp, "status_code", None) or getattr(resp, "status", None)
-                )
-                == 429
-            ):
+            if resp and (getattr(resp, "status_code", None) or getattr(resp, "status", None)) == 429:
                 return True
         return False
 
@@ -229,15 +224,11 @@ def get_and_wait_until_loaded(
             break
 
         if now >= next_warn_at:
-            logger.warning(
-                f"⏳ [{context}] Waiting for readyState='complete' ({now - start:.1f}s, state={state!r})"
-            )
+            logger.warning(f"⏳ [{context}] Waiting for readyState='complete' ({now - start:.1f}s, state={state!r})")
             next_warn_at += warn_every
 
         if now >= deadline:
-            raise TimeoutError(
-                f"[{context}] ❌ Page did not load after {timeout}s (last state={state!r})"
-            )
+            raise TimeoutError(f"[{context}] ❌ Page did not load after {timeout}s (last state={state!r})")
 
         time.sleep(poll)
 
@@ -246,28 +237,16 @@ def get_and_wait_until_loaded(
         next_warn_at = time.monotonic() + warn_every
         while True:
             now = time.monotonic()
-            ok = (
-                _any_visible(driver, wait_for)
-                if wait_for
-                else _all_visible(driver, wait_for_all)
-            )
-            detail = (
-                f"locator={wait_for!r}"
-                if wait_for
-                else f"locators={list(wait_for_all)!r}"
-            )
+            ok = _any_visible(driver, wait_for) if wait_for else _all_visible(driver, wait_for_all)
+            detail = f"locator={wait_for!r}" if wait_for else f"locators={list(wait_for_all)!r}"
             if ok:
                 return
 
             if now >= next_warn_at:
-                logger.warning(
-                    f"⏳ [{context}] Page loaded but waiting for visible element(s): {detail}"
-                )
+                logger.warning(f"⏳ [{context}] Page loaded but waiting for visible element(s): {detail}")
                 next_warn_at += warn_every
 
             if now >= deadline:
-                raise TimeoutError(
-                    f"[{context}] ❌ Element(s) not visible in time: {detail}"
-                )
+                raise TimeoutError(f"[{context}] ❌ Element(s) not visible in time: {detail}")
 
             time.sleep(poll)

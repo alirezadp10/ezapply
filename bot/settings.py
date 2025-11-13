@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 @dataclass
 class Settings:
     SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "sqlite:///./storages/data.db")
@@ -23,8 +24,11 @@ class Settings:
     COUNTRIES: str = os.getenv("COUNTRIES")
 
     DEEPINFRA_API_URL: str = os.getenv("DEEPINFRA_API_URL", "https://api.deepinfra.com/v1/openai/chat/completions")
-    DEEPINFRA_EMBEDDING_API_URL: str = os.getenv("DEEPINFRA_EMBEDDING_API_URL", "https://api.deepinfra.com/v1/inference/google/embeddinggemma-300m")
+    DEEPINFRA_EMBEDDING_API_URL: str = os.getenv(
+        "DEEPINFRA_EMBEDDING_API_URL", "https://api.deepinfra.com/v1/inference/google/embeddinggemma-300m"
+    )
     DEEPINFRA_MODEL_NAME: str = os.getenv("DEEPINFRA_MODEL_NAME", "meta-llama/Meta-Llama-3-8B-Instruct")
     DEEPINFRA_API_KEY: str = os.getenv("DEEPINFRA_API_KEY")
+
 
 settings = Settings()

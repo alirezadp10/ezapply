@@ -60,20 +60,14 @@ class EmbeddingService:
         """
 
         # Build matrices: query (n x d) and historical (m x d), keeping row indices
-        q_mat, kept_q = EmbeddingService._stack_embeddings(
-            [i.embeddings for i in items]
-        )  # (n, d)
-        h_mat, kept_h = EmbeddingService._stack_embeddings(
-            [f.embedding for f in historical]
-        )  # (m, d)
+        q_mat, kept_q = EmbeddingService._stack_embeddings([i.embeddings for i in items])  # (n, d)
+        h_mat, kept_h = EmbeddingService._stack_embeddings([f.embedding for f in historical])  # (m, d)
 
         if q_mat.size == 0 or h_mat.size == 0:
             return
 
         # Cosine similarity matrix (n x m)
-        sim = EmbeddingService._cosine_similarity_matrix(
-            q_mat, h_mat
-        )  # values in [-1, 1]
+        sim = EmbeddingService._cosine_similarity_matrix(q_mat, h_mat)  # values in [-1, 1]
 
         # For each query, take the best historical match
         best_idx = sim.argmax(axis=1)  # (n,)

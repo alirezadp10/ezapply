@@ -29,9 +29,7 @@ class AuthenticationService:
         login_url = f"{settings.LINKEDIN_BASE_URL}/login"
         logger.info(f"🔐 Navigating to {login_url}")
 
-        safe_action(
-            lambda: get_and_wait_until_loaded(self.driver, login_url), "load_login_page"
-        )
+        safe_action(lambda: get_and_wait_until_loaded(self.driver, login_url), "load_login_page")
 
         # --- Already logged in?
         current_url = self.driver.current_url
@@ -63,9 +61,7 @@ class AuthenticationService:
             logger.warning("⚠️ Password input not found.")
 
         # --- Submit button
-        submit_el = safe_find_element(
-            self.driver, By.CSS_SELECTOR, '[data-litms-control-urn="login-submit"]'
-        )
+        submit_el = safe_find_element(self.driver, By.CSS_SELECTOR, '[data-litms-control-urn="login-submit"]')
         if submit_el:
             safe_action(lambda: submit_el.click(), "click_login_button")
         else:
@@ -81,9 +77,7 @@ class AuthenticationService:
             if body_has_text(self.driver, "challenge") or "checkpoint" in current_url:
                 logger.warning("⚠️ Captcha or verification step detected.")
             else:
-                logger.warning(
-                    f"⚠️ Login may not have completed. Current URL: {current_url}"
-                )
+                logger.warning(f"⚠️ Login may not have completed. Current URL: {current_url}")
 
     def is_logged_in(self) -> bool:
         """Check whether the user appears logged in (based on current URL)."""

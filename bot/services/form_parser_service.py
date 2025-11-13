@@ -15,7 +15,9 @@ class FormParserService:
     def parse_form_fields(self):
         """Parse visible and enabled input, select, textarea, checkbox, and radio fields from the modal form."""
         try:
-            modal = find_elements(driver=self.driver, by=By.CSS_SELECTOR, selector=ElementsEnum.MODAL, retries=5, index=0)
+            modal = find_elements(
+                driver=self.driver, by=By.CSS_SELECTOR, selector=ElementsEnum.MODAL, retries=5, index=0
+            )
         except NoSuchElementException:
             logger.error("❌ could not find modal element")
             return []
@@ -25,9 +27,7 @@ class FormParserService:
             return []
 
         fields = (
-            self._extract_fields(
-                form, ElementsEnum.INPUT_NOT_RADIO, self._should_include_input
-            )
+            self._extract_fields(form, ElementsEnum.INPUT_NOT_RADIO, self._should_include_input)
             + self._extract_fields(
                 form,
                 ElementsEnum.SELECT,
@@ -57,9 +57,7 @@ class FormParserService:
 
             if include_options:
                 options = [
-                    opt.text.strip()
-                    for opt in el.find_elements(By.TAG_NAME, ElementsEnum.OPTION)
-                    if opt.text.strip()
+                    opt.text.strip() for opt in el.find_elements(By.TAG_NAME, ElementsEnum.OPTION) if opt.text.strip()
                 ]
                 if options:
                     label = f"{label} ({', '.join(options)})"
@@ -96,9 +94,7 @@ class FormParserService:
         """Extracts multiple-choice checkbox groups (e.g., LinkedIn Easy Apply multi-select questions)."""
         results = []
         # Fieldsets with checkboxes — commonly identified by data-test-checkbox-form-component
-        for fs in form.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.CHECKBOX_FIELDSET_COMPONENT
-        ):
+        for fs in form.find_elements(By.CSS_SELECTOR, ElementsEnum.CHECKBOX_FIELDSET_COMPONENT):
             if not fs.is_displayed():
                 continue
 
@@ -115,9 +111,7 @@ class FormParserService:
                 if not (cb.is_displayed() and cb.is_enabled()):
                     continue
                 try:
-                    sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(
-                        id=cb.get_attribute("id")
-                    )
+                    sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(id=cb.get_attribute("id"))
                     label_el = fs.find_element(By.CSS_SELECTOR, sel)
                     if label_el.text.strip():
                         options.append(label_el.text.strip())
@@ -184,9 +178,7 @@ class FormParserService:
             if not legend.strip():
                 # LinkedIn sometimes hides text in <span> elements
                 legend = " ".join(
-                    span.text
-                    for span in fieldset.find_elements(By.TAG_NAME, ElementsEnum.SPAN)
-                    if span.text.strip()
+                    span.text for span in fieldset.find_elements(By.TAG_NAME, ElementsEnum.SPAN) if span.text.strip()
                 )
         except Exception:
             legend = ""
@@ -199,9 +191,7 @@ class FormParserService:
             if not (radio.is_displayed() and radio.is_enabled()):
                 continue
             try:
-                sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(
-                    id=radio.get_attribute("id")
-                )
+                sel = ElementsEnum.LABEL_FOR_TEMPLATE.format(id=radio.get_attribute("id"))
                 label_el = fieldset.find_element(By.CSS_SELECTOR, sel)
                 if label_el.text.strip():
                     options.append(label_el.text.strip())
