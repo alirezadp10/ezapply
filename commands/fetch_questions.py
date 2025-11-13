@@ -1,18 +1,17 @@
 import argparse
-import time
 import random
+import time
 
 from loguru import logger
 from selenium.webdriver.common.by import By
 
-from bot.services import AuthenticationService
-from bot.settings import settings
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
-from bot.enums import ModesEnum, JobStatusEnum
-from bot.helpers import get_and_wait_until_loaded, body_has_text, click_if_exists
-from bot.job_applicator import JobApplicator
+from bot.enums import JobStatusEnum, ModesEnum
+from bot.helpers.helpers import body_has_text, click_if_exists, get_and_wait_until_loaded
 from bot.logger_manager import setup_logger
+from bot.services import AuthenticationService, JobApplicatorService
+from bot.settings import settings
 
 
 def parse_args():
@@ -60,7 +59,7 @@ def main():
             ).click()
 
         logger.info(f"🔎 Processing job #{job.id}")
-        JobApplicator(driver=driver, db=db).apply_to_job(job_id=job.id)
+        JobApplicatorService(driver=driver, db=db).apply_to_job(job_id=job.id)
 
 
 if __name__ == "__main__":

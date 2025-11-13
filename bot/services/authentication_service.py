@@ -1,17 +1,18 @@
 import random
 import time
-from loguru import logger
-from selenium.webdriver.common.by import By
-from selenium.common import WebDriverException
 
-from bot.settings import settings
+from loguru import logger
+from selenium.common import WebDriverException
+from selenium.webdriver.common.by import By
+
 from bot.helpers.helpers import (
-    safe_find_element,
-    safe_action,
-    click_if_exists,
     body_has_text,
+    click_if_exists,
     get_and_wait_until_loaded,
+    safe_action,
+    safe_find_element,
 )
+from bot.settings import settings
 
 
 class AuthenticationService:

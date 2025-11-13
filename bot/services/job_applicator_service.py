@@ -1,7 +1,8 @@
 from __future__ import annotations
-import numpy as np
-from typing import List, Dict
 
+from typing import Dict, List
+
+import numpy as np
 from loguru import logger
 from selenium.webdriver.common.by import By
 
@@ -10,7 +11,7 @@ from bot.enums import ElementsEnum, JobStatusEnum
 from bot.exceptions import JobApplyError
 from bot.helpers.helpers import click_if_exists
 from bot.schemas import FormItemSchema
-from bot.services import EmbeddingService, FormParserService, FormFillerService
+from bot.services import EmbeddingService, FormFillerService, FormParserService
 from bot.settings import settings
 
 

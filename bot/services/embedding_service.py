@@ -1,11 +1,13 @@
 from __future__ import annotations
-import requests
-from typing import List
-from loguru import logger
-from bot.settings import settings
-from typing import Iterable, Tuple
+
+from typing import Iterable, List, Tuple
+
 import numpy as np
+import requests
+from loguru import logger
+
 from bot.schemas import FormItemSchema
+from bot.settings import settings
 
 
 class EmbeddingService:

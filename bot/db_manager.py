@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import numpy as np
 from contextlib import contextmanager
-from typing import Iterator, Optional, List, cast
+from typing import Iterator, List, Optional, cast
 
-from sqlalchemy import create_engine, or_, update, select
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
+import numpy as np
 from loguru import logger
+from sqlalchemy import create_engine, or_, select, update
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, sessionmaker
 
-from bot.settings import settings
 from bot.enums import JobStatusEnum
-from bot.models import Base, Job, Field, FieldJob
+from bot.models import Base, Field, FieldJob, Job
+from bot.settings import settings
 
 
 class DBManager:

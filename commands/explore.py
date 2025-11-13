@@ -1,24 +1,24 @@
-import time
 import random
+import time
 from typing import List, Optional
 
 from loguru import logger
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
-from bot.driver_manager import DriverManager
 from bot.db_manager import DBManager
-from bot.enums import ModesEnum, ElementsEnum, Country
-from bot.helpers import (
-    click_if_exists,
+from bot.driver_manager import DriverManager
+from bot.enums import Country, ElementsEnum, ModesEnum
+from bot.helpers.helpers import (
     body_has_text,
-    has_offsite_apply_icon,
-    get_children,
-    click_with_rate_limit_checking,
     build_job_url,
+    click_if_exists,
+    click_with_rate_limit_checking,
+    get_and_wait_until_loaded,
+    get_children,
+    has_offsite_apply_icon,
     safe_action,
     safe_find_element,
-    get_and_wait_until_loaded,
 )
 from bot.logger_manager import setup_logger
 from bot.settings import settings

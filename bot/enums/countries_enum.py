@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Country(str, Enum):
     UNITED_ARAB_EMIRATES = 104305776
     OMAN = 103619019

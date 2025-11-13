@@ -1,7 +1,8 @@
 import random
 import time
-from typing import Optional, List, Iterable, Tuple
 from contextlib import suppress
+from typing import Iterable, List, Optional, Tuple
+
 from loguru import logger
 from selenium import webdriver
 from selenium.common import (
@@ -13,8 +14,8 @@ from selenium.common import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from bot.settings import settings
 from bot.enums import ElementsEnum, WorkTypesEnum
+from bot.settings import settings
 
 
 # ==========================================

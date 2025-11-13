@@ -1,6 +1,6 @@
 from pydantic_ai import Agent
-from bot.settings import settings
 
+from bot.settings import settings
 
 ASK_FORM_SYSTEM_PROMPT = """
 You are a Form-Filling AI.

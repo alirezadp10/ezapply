@@ -1,5 +1,6 @@
-from loguru import logger
 import os
+
+from loguru import logger
 
 LOG_DIR = "logs"
 LOG_FILE = os.path.join(LOG_DIR, "bot.log")

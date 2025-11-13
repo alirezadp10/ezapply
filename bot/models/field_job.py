@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, DateTime, UniqueConstraint
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, UniqueConstraint
 
 from bot.models import Base
 

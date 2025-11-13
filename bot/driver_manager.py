@@ -1,11 +1,12 @@
 import re
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
+import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from bot.settings import settings
-import undetected_chromedriver as uc
 
 
 class DriverManager:
