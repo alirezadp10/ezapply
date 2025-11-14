@@ -44,10 +44,7 @@ class FormAnswerAgent:
                 return result
 
             except Exception as e:
-                logger.warning(
-                    f"⚠️ FormAnswerAgent error on attempt "
-                    f"{attempt}/{settings.AI_MAX_RETRIES}: {e}"
-                )
+                logger.warning(f"⚠️ FormAnswerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")
 
                 if attempt == settings.AI_MAX_RETRIES:
                     logger.error("❌ FormAnswerAgent failed after all retries")

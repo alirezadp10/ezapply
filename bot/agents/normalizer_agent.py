@@ -61,9 +61,7 @@ class NormalizerAgent:
                 return result.output
 
             except Exception as e:
-                logger.warning(
-                    f"⚠️ NormalizerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}"
-                )
+                logger.warning(f"⚠️ NormalizerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")
 
                 # If this was the last retry -> re-raise
                 if attempt == settings.AI_MAX_RETRIES:

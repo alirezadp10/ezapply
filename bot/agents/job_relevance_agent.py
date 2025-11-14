@@ -41,18 +41,11 @@ class JobRelevanceAgent:
 
         for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
-                result = (
-                    agent.run_sync(prompt)
-                    .output.strip()
-                    .lower()
-                )
+                result = agent.run_sync(prompt).output.strip().lower()
                 return result == "yes"
 
             except Exception as e:
-                logger.warning(
-                    f"⚠️ JobRelevanceAgent error on attempt "
-                    f"{attempt}/{settings.AI_MAX_RETRIES}: {e}"
-                )
+                logger.warning(f"⚠️ JobRelevanceAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")
 
                 if attempt == settings.AI_MAX_RETRIES:
                     logger.error("❌ JobRelevanceAgent failed after all retries")

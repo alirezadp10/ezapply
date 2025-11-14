@@ -21,6 +21,7 @@ def safe_find_element(driver, by, value, *, retries=3, delay=1):
         time.sleep(delay)
     return None
 
+
 def safe_action(fn, name="unknown_action", retries=2, delay=2):
     for attempt in range(retries):
         try:

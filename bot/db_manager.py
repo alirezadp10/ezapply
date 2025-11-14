@@ -1,14 +1,13 @@
+import importlib
 import inspect
 import pkgutil
-import importlib
 from contextlib import contextmanager
-from typing import Iterator, Any, Dict
+from typing import Any, Dict, Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from bot.settings import settings
-
 
 engine = create_engine(settings.SQLITE_DB_PATH, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
