@@ -28,36 +28,63 @@ def main():
     args = parse_args()
 
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
+
+    # Start driver
     driver = DriverManager.create_driver(profile=args.username)
+
+    # Authenticate
+    AuthenticationService(driver).login(
+        username=args.username,
+        password=args.password,
+    )
+
+    # Single DB manager for the whole run
     db = DBManager()
 
-    AuthenticationService(driver).login(username=args.username, password=args.password)
+    try:
+        # First transaction: load jobs
+        with db.transaction():
+            jobs = db.jobs.get_not_applied(db.session)
 
-    jobs = db.get_not_applied_jobs()
-    for job in jobs:
-        get_and_wait_until_loaded(driver, job.url)
-        time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
+        for job in jobs:
+            get_and_wait_until_loaded(driver, job.url)
+            time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
 
-        if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
-            db.update_job_status(job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
-            logger.error("❌ Work type mismatch.")
-            continue
+            # -------------------------------
+            # WORK TYPE CHECKS
+            # -------------------------------
+            if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
+                with db.transaction():
+                    db.jobs.update_status(db.session, job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
+                logger.error("❌ Work type mismatch.")
+                continue
 
-        if body_has_text(driver, "No longer accepting applications"):
-            db.update_job_status(job.id, JobStatusEnum.EXPIRED)
-            logger.error("❌ Request has been expired.")
-            continue
+            if body_has_text(driver, "No longer accepting applications"):
+                with db.transaction():
+                    db.jobs.update_status(db.session, job.id, JobStatusEnum.EXPIRED)
+                logger.error("❌ Request has been expired.")
+                continue
 
-        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
-            db.update_job_status(job.id, JobStatusEnum.APPLY_BUTTON)
-            logger.error("❌ Couldn't find apply button.")
-            continue
+            # -------------------------------
+            # ATTEMPT TO CLICK APPLY BUTTON
+            # -------------------------------
+            if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
+                with db.transaction():
+                    db.jobs.update_status(db.session, job.id, JobStatusEnum.APPLY_BUTTON)
+                logger.error("❌ Couldn't find apply button.")
+                continue
 
-        if body_has_text(driver, "Job search safety reminder"):
-            driver.find_element(By.CSS_SELECTOR, "[data-live-test-job-apply-button]").click()
+            if body_has_text(driver, "Job search safety reminder"):
+                driver.find_element(By.CSS_SELECTOR, "[data-live-test-job-apply-button]").click()
 
-        logger.info(f"🔎 Processing job #{job.id}")
-        JobApplicatorService(driver=driver, db=db).apply_to_job(job_id=job.id)
+            logger.info(f"🔎 Processing job #{job.id}")
+
+            with db.transaction():
+                applicator = JobApplicatorService(driver=driver, db=db)
+                applicator.apply_to_job(job_id=job.id)
+
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

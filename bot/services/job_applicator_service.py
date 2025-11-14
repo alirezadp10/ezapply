@@ -33,7 +33,6 @@ from bot.settings import settings
 class JobApplicatorService:
     def __init__(self, driver, db, wait_seconds: int = 10):
         self.driver = driver
-        self.db = db
         self.wait = WebDriverWait(driver, wait_seconds)
 
     # -------------------------------------------------------------------------
