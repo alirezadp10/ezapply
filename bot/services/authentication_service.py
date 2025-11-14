@@ -1,5 +1,6 @@
 import random
 import time
+
 from loguru import logger
 from selenium.common import WebDriverException
 from selenium.webdriver.common.by import By

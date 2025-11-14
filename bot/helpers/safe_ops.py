@@ -1,4 +1,5 @@
 import time
+
 from loguru import logger
 from selenium.common import (
     NoSuchElementException,
@@ -6,6 +7,7 @@ from selenium.common import (
     TimeoutException,
     WebDriverException,
 )
+
 
 def safe_find_element(driver, by, value, *, retries=3, delay=1):
     for attempt in range(retries):

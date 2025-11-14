@@ -22,6 +22,7 @@ from bot.enums import ElementsEnum
 # Label / text cleaning
 # ==========================================
 
+
 def clean_label_text(text: str) -> str:
     """Normalize whitespace and remove redundant or 'Required' text."""
     text = re.sub(r"\bRequired\b", "", text, flags=re.IGNORECASE)
@@ -57,6 +58,7 @@ def get_label(form: WebElement, field_id: str) -> str:
 # Inclusion rules
 # ==========================================
 
+
 def should_include_input(el: WebElement) -> bool:
     return el.is_displayed() and el.is_enabled() and not el.get_attribute("value")
 
@@ -72,12 +74,13 @@ def should_include_select(el: WebElement) -> bool:
 # Generic field extraction
 # ==========================================
 
+
 def extract_fields(
-        form: WebElement,
-        selector: str,
-        include_fn,
-        *,
-        include_options: bool = False,
+    form: WebElement,
+    selector: str,
+    include_fn,
+    *,
+    include_options: bool = False,
 ) -> List[Dict[str, str]]:
     """Generic field extractor for inputs and selects."""
     results: List[Dict[str, str]] = []
@@ -90,9 +93,7 @@ def extract_fields(
 
         if include_options:
             options = [
-                opt.text.strip()
-                for opt in el.find_elements(By.TAG_NAME, ElementsEnum.OPTION)
-                if opt.text.strip()
+                opt.text.strip() for opt in el.find_elements(By.TAG_NAME, ElementsEnum.OPTION) if opt.text.strip()
             ]
             if options:
                 label = f"{label} ({', '.join(options)})"
@@ -126,9 +127,7 @@ def extract_legend_text(fieldset: WebElement) -> str:
         if not legend.strip():
             # LinkedIn sometimes hides text in <span> elements
             legend = " ".join(
-                span.text
-                for span in fieldset.find_elements(By.TAG_NAME, ElementsEnum.SPAN)
-                if span.text.strip()
+                span.text for span in fieldset.find_elements(By.TAG_NAME, ElementsEnum.SPAN) if span.text.strip()
             )
     except Exception:
         legend = ""
@@ -221,6 +220,7 @@ def extract_radio_groups(form: WebElement) -> List[Dict[str, str]]:
 # Utilities
 # ==========================================
 
+
 def wait_present_by_id(wait: WebDriverWait, element_id: str) -> WebElement:
     return wait.until(ec.presence_of_element_located((By.ID, element_id)))
 
@@ -260,11 +260,12 @@ def infer_type(el: WebElement) -> str:
 # Fieldset helpers
 # ==========================================
 
+
 def _click_radio_via_label(
-        driver,
-        wait: WebDriverWait,
-        fieldset: WebElement,
-        radio: WebElement,
+    driver,
+    wait: WebDriverWait,
+    fieldset: WebElement,
+    radio: WebElement,
 ) -> bool:
     rid = radio.get_attribute("id")
     if not rid:
@@ -283,10 +284,10 @@ def _click_radio_via_label(
 
 
 def click_radio_in_fieldset(
-        driver,
-        wait: WebDriverWait,
-        fieldset: WebElement,
-        answer: str,
+    driver,
+    wait: WebDriverWait,
+    fieldset: WebElement,
+    answer: str,
 ) -> bool:
     if not answer:
         return False
@@ -350,10 +351,10 @@ def click_radio_in_fieldset(
 
 
 def _click_checkbox_label(
-        driver,
-        wait: WebDriverWait,
-        labels: Dict[str, Tuple[WebElement, str]],
-        input_el: WebElement,
+    driver,
+    wait: WebDriverWait,
+    labels: Dict[str, Tuple[WebElement, str]],
+    input_el: WebElement,
 ) -> bool:
     rid = input_el.get_attribute("id")
     if not rid or rid not in labels:
@@ -368,12 +369,12 @@ def _click_checkbox_label(
 
 
 def set_checkboxes_in_fieldset(
-        driver,
-        wait: WebDriverWait,
-        fieldset: WebElement,
-        answer: Any,
-        *,
-        unselect_others: bool = False,
+    driver,
+    wait: WebDriverWait,
+    fieldset: WebElement,
+    answer: Any,
+    *,
+    unselect_others: bool = False,
 ) -> bool:
     if answer is None or str(answer).strip() == "":
         return False
@@ -432,9 +433,7 @@ def set_checkboxes_in_fieldset(
             label_txt = labels.get(rid, (None, ""))[1] if rid in labels else ""
 
             is_desired = (
-                    (val in desired)
-                    or (label_txt in desired)
-                    or any(w in label_txt for w in desired if len(w) >= 3)
+                (val in desired) or (label_txt in desired) or any(w in label_txt for w in desired if len(w) >= 3)
             )
             if cb.is_selected() and not is_desired:
                 if not _click_checkbox_label(driver, wait, labels, cb):
@@ -451,6 +450,7 @@ def set_checkboxes_in_fieldset(
 # ==========================================
 # Element handlers
 # ==========================================
+
 
 def handle_input(driver, el: WebElement, answer: Any) -> None:
     input_type = (el.get_attribute("type") or "").lower()

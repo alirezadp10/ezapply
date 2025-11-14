@@ -1,8 +1,10 @@
 import random
 import time
+
 from selenium.webdriver.common.by import By
 
 from bot.settings import settings
+
 
 def get_children(driver, root):
     if root is None:

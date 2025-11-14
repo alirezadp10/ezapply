@@ -19,7 +19,7 @@ class Settings:
     MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 10))
 
     USER_INFORMATION: str = os.getenv("USER_INFORMATION")
-    JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 24)) * 3600 # in hour
+    JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 24)) * 3600  # in hour
     WORK_TYPE: str = os.getenv("WORK_TYPE", "remote")
     KEYWORDS: str = os.getenv("KEYWORDS", "laravel,python,go")
     COUNTRIES: str = os.getenv("COUNTRIES")
@@ -36,5 +36,6 @@ class Settings:
     # AI
     AI_MAX_RETRIES: int = os.getenv("AI_MAX_RETRIES", 5)
     AI_BACKOFF_BASE: float = os.getenv("AI_BACKOFF_BASE", 0.5)
+
 
 settings = Settings()

@@ -4,7 +4,6 @@ import time
 from typing import Iterable, Optional, Tuple
 
 from loguru import logger
-from selenium.webdriver.common.by import By
 from selenium import webdriver
 
 Locator = Tuple[str, str]

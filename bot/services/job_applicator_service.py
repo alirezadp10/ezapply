@@ -182,21 +182,24 @@ class JobApplicatorService:
             return []
 
         fields = (
-                extract_fields(form, ElementsEnum.INPUT_NOT_RADIO, include_fn=lambda el: el.is_displayed()
-                                                                                         and el.is_enabled() and not el.get_attribute("value"))
-                + extract_fields(
-            form,
-            ElementsEnum.SELECT,
-            include_fn=lambda el: (
+            extract_fields(
+                form,
+                ElementsEnum.INPUT_NOT_RADIO,
+                include_fn=lambda el: el.is_displayed() and el.is_enabled() and not el.get_attribute("value"),
+            )
+            + extract_fields(
+                form,
+                ElementsEnum.SELECT,
+                include_fn=lambda el: (
                     el.is_displayed()
                     and el.is_enabled()
                     and ((el.get_attribute("value") or "").strip() in ("", "Select an option"))
-            ),
-            include_options=True,
-        )
-                + extract_textareas(form)
-                + extract_checkbox_groups(form)
-                + extract_radio_groups(form)
+                ),
+                include_options=True,
+            )
+            + extract_textareas(form)
+            + extract_checkbox_groups(form)
+            + extract_radio_groups(form)
         )
 
         return fields
@@ -205,9 +208,9 @@ class JobApplicatorService:
     # Filling fields
     # -------------------------------------------------------------------------
     def fill_fields(
-            self,
-            fields: Iterable[Dict[str, Any]],
-            answers: Iterable[FormItemSchema],
+        self,
+        fields: Iterable[Dict[str, Any]],
+        answers: Iterable[FormItemSchema],
     ) -> List[FormItemSchema]:
         """
         Fill collection of form fields using (label -> answer) pairs.

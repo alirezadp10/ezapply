@@ -1,6 +1,7 @@
 import time
 from contextlib import suppress
 
+
 def click_with_rate_limit_checking(driver, job_item, delay=2) -> bool:
     """Click element and detect LinkedIn Easy Apply rate-limit."""
 

@@ -1,5 +1,7 @@
 from selenium.webdriver.common.by import By
+
 from bot.enums import ElementsEnum
+
 
 def has_exhausted_limit(driver) -> bool:
     xpath = (

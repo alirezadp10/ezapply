@@ -1,6 +1,8 @@
 from typing import Optional
+
 from bot.enums import WorkTypesEnum
 from bot.settings import settings
+
 
 def build_job_url(
         keyword: Optional[str] = None,

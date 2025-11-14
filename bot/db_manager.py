@@ -1,175 +1,45 @@
-from __future__ import annotations
-
 from contextlib import contextmanager
-from typing import Iterator, List, Optional, cast
+from typing import Iterator
 
-import numpy as np
-from loguru import logger
-from sqlalchemy import create_engine, or_, select, update
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from bot.enums import JobStatusEnum
-from bot.models import Base, Field, FieldJob, Job
 from bot.settings import settings
 
+# ---------------------------------------------------------
+# Engine + Session factory
+# ---------------------------------------------------------
 
-class DBManager:
-    """Centralized database manager for Jobs and Fields."""
+engine = create_engine(
+    settings.SQLITE_DB_PATH,
+    echo=False,
+    future=True,
+)
 
-    def __init__(self):
-        self.engine = create_engine(settings.SQLITE_DB_PATH, echo=False, future=True)
-        self.SessionLocal = sessionmaker(bind=self.engine, expire_on_commit=False, class_=Session)
-        Base.metadata.create_all(self.engine)
+SessionLocal = sessionmaker(
+    bind=engine,
+    expire_on_commit=False,
+    class_=Session,
+)
 
-    # ----------------------------------------------------- #
-    # Context manager
-    # ----------------------------------------------------- #
-    @contextmanager
-    def get_session(self) -> Iterator[Session]:
-        """Provide a transactional scope for a DB session."""
-        session = self.SessionLocal()
-        try:
-            yield session
-            session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
 
-    # ----------------------------------------------------- #
-    # Helpers
-    # ----------------------------------------------------- #
-    def _commit(self, session: Session) -> bool:
-        """Safely commit a transaction."""
-        try:
-            session.commit()
-            return True
-        except IntegrityError as e:
-            logger.warning(f"IntegrityError: {e}")
-            session.rollback()
-            return False
-        except Exception as e:
-            logger.exception(f"Unexpected DB error: {e}")
-            session.rollback()
-            return False
+# ---------------------------------------------------------
+# Context-managed session
+# ---------------------------------------------------------
 
-    # ----------------------------------------------------- #
-    # Job operations
-    # ----------------------------------------------------- #
-    def save_job(
-        self,
-        job_id: str,
-        title: str,
-        description: str,
-        country: str,
-        keyword: str,
-        url: str,
-    ) -> bool:
-        with self.SessionLocal() as session:
-            job = session.execute(select(Job).where(Job.job_id == job_id)).scalars().first()
 
-        if job:
-            return False
-
-        """Insert a new job record."""
-        with self.SessionLocal() as session:
-            job = Job(
-                job_id=job_id,
-                title=title,
-                description=description,
-                country=country,
-                keyword=keyword,
-                url=url,
-            )
-            session.add(job)
-            return self._commit(session)
-
-    def get_not_applied_jobs(self) -> list[Job]:
-        """Return jobs not yet applied and not canceled."""
-        with self.SessionLocal() as session:
-            jobs = (
-                session.query(Job)
-                .filter(
-                    or_(
-                        Job.status == JobStatusEnum.FILL_OUT_FORM,
-                        Job.status == JobStatusEnum.APPLY_BUTTON,
-                        Job.status.is_(None),
-                    ),
-                )
-                .all()
-            )
-            return cast(list[Job], jobs)
-
-    def get_job_by_id(self, job_id: Optional[str] = None, pk: Optional[int] = None) -> Optional[Job]:
-        """Fetch a single job by its primary key or LinkedIn job_id."""
-        if not job_id and not pk:
-            raise ValueError("You must provide either job_id or pk")
-        with self.SessionLocal() as session:
-            query = session.query(Job)
-            if job_id:
-                return query.filter(Job.job_id == job_id).first()
-            return query.filter(Job.id == pk).first()
-
-    def get_jobs_by_status(self, status: JobStatusEnum) -> List[Job]:
-        """Return all jobs matching a specific status."""
-        with self.SessionLocal() as session:
-            return session.query(Job).filter(Job.status == status).all()
-
-    def update_job_status(self, pk: int, status: JobStatusEnum) -> bool:
-        """Update a job's status and optional reason."""
-        with self.SessionLocal() as session:
-            stmt = update(Job).where(Job.id == pk).values(status=status)
-            session.execute(stmt)
-            return self._commit(session)
-
-    # ----------------------------------------------------- #
-    # Field operations
-    # ----------------------------------------------------- #
-    def save_field(
-        self,
-        label: str,
-        value: str,
-        type: str,
-        embeddings: list[float],
-    ) -> Field:
-        """Save a new field and its embedding."""
-        with self.SessionLocal() as session:
-            field = session.execute(select(Field).where(Field.label == label, Field.value == value)).scalars().first()
-
-        if field:
-            return field
-
-        field = Field(
-            label=label,
-            value=value,
-            type=type,
-            embedding=np.array(embeddings, dtype=np.float32).tobytes(),
-        )
-        session.add(field)
-        self._commit(session)
-        return field
-
-    def get_all_fields(self) -> List[Field]:
-        """Return all field records."""
-        with self.SessionLocal() as session:
-            return session.query(Field).all()
-
-    def get_field_by_label(self, label: str) -> Optional["Field"]:
-        """Fetch a Field by label (or None if missing)."""
-        with self.SessionLocal() as session:
-            return session.execute(select(Field).where(Field.label == label)).scalar_one_or_none()
-
-    def save_field_job(self, job_id: int, field_id: int) -> bool:
-        with self.SessionLocal() as session:
-            existing = session.execute(
-                select(FieldJob).where(FieldJob.job_id == job_id, FieldJob.field_id == field_id)
-            ).scalar_one_or_none()
-
-            if existing:
-                return False
-
-            field_job = FieldJob(job_id=job_id, field_id=field_id)
-            session.add(field_job)
-            return self._commit(session)
+@contextmanager
+def get_session() -> Iterator[Session]:
+    """
+    Provides a transactional scope around a series of operations.
+    Automatically commits on success and rolls back on failure.
+    """
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

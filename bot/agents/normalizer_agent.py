@@ -1,6 +1,8 @@
 import time
+
 from loguru import logger
 from pydantic_ai import Agent
+
 from bot.schemas import NormalizerOutputSchema
 from bot.settings import settings
 
