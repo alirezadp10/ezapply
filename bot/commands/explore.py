@@ -9,17 +9,12 @@ from selenium.webdriver.common.by import By
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import Country, ElementsEnum, ModesEnum
-from bot.helpers.helpers import (
-    body_has_text,
-    build_job_url,
-    click_if_exists,
-    click_with_rate_limit_checking,
-    get_and_wait_until_loaded,
-    get_children,
-    has_offsite_apply_icon,
-    safe_action,
-    safe_find_element,
-)
+from bot.helpers.dom_utils import click_if_exists, get_children
+from bot.helpers.page_load import get_and_wait_until_loaded
+from bot.helpers.page_state import body_has_text, has_offsite_apply_icon
+from bot.helpers.rate_limit import click_with_rate_limit_checking
+from bot.helpers.safe_ops import safe_find_element, safe_action
+from bot.helpers.url_builder import build_job_url
 from bot.logger_manager import setup_logger
 from bot.settings import settings
 

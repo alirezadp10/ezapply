@@ -1,17 +1,13 @@
 import random
 import time
-
 from loguru import logger
 from selenium.common import WebDriverException
 from selenium.webdriver.common.by import By
 
-from bot.helpers.helpers import (
-    body_has_text,
-    click_if_exists,
-    get_and_wait_until_loaded,
-    safe_action,
-    safe_find_element,
-)
+from bot.helpers.dom_utils import click_if_exists
+from bot.helpers.page_load import get_and_wait_until_loaded
+from bot.helpers.page_state import body_has_text
+from bot.helpers.safe_ops import safe_action, safe_find_element
 from bot.settings import settings
 
 

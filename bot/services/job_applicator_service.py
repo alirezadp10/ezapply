@@ -1,27 +1,44 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Any, Dict, Iterable, List
 
 import numpy as np
 from loguru import logger
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 
 from bot.agents import FormAnswerAgent
 from bot.enums import ElementsEnum, JobStatusEnum
 from bot.exceptions import JobApplyError
-from bot.helpers.helpers import click_if_exists
+from bot.helpers.dom_utils import click_if_exists, find_elements
+from bot.helpers.form_utils import (
+    extract_checkbox_groups,
+    extract_fields,
+    extract_radio_groups,
+    extract_textareas,
+    handle_fieldset,
+    handle_generic_editable,
+    handle_input,
+    handle_select,
+    handle_textarea,
+    infer_type,
+    wait_present_by_id,
+)
 from bot.schemas import FormItemSchema
-from bot.services import EmbeddingService, FormFillerService, FormParserService
+from bot.services import EmbeddingService
 from bot.settings import settings
 
 
 class JobApplicatorService:
-    def __init__(self, driver, db):
+    def __init__(self, driver, db, wait_seconds: int = 10):
         self.driver = driver
         self.db = db
-        self.parser = FormParserService(driver)
-        self.filler = FormFillerService(driver)
+        self.wait = WebDriverWait(driver, wait_seconds)
 
+    # -------------------------------------------------------------------------
+    # Public API
+    # -------------------------------------------------------------------------
     def apply_to_job(self, job_id: int):
         try:
             step_count = 0
@@ -32,14 +49,14 @@ class JobApplicatorService:
                         f"Exceeded {settings.MAX_STEPS_PER_APPLICATION} steps; aborting to avoid an infinite loop."
                     )
 
-                payload = self.parser.parse_form_fields()
+                payload = self.parse_form_fields()
 
                 if payload:
                     items = self._prepare_items_with_embeddings(payload)
                     self._hydrate_answers_from_history(items)
                     ai_answers = self._generate_ai_answers_for_unanswered(items)
                     self._merge_ai_answers(items, ai_answers)
-                    fields = self.filler.fill_fields(payload, items)
+                    fields = self.fill_fields(payload, items)
                     self._persist_filled_fields(fields, job_id)
 
                 if self._has_error_icon():
@@ -59,6 +76,9 @@ class JobApplicatorService:
             logger.error(f"❌ {str(e)}")
             return
 
+    # -------------------------------------------------------------------------
+    # Navigation helpers
+    # -------------------------------------------------------------------------
     def _next_step(self) -> bool:
         """
         Attempts to go to the next step (or review). Returns True if we clicked something.
@@ -69,9 +89,7 @@ class JobApplicatorService:
         return False
 
     def _check_questions_have_been_finished(self) -> bool:
-        if self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SUBMIT_BUTTON):
-            return True
-        return False
+        return bool(self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.SUBMIT_BUTTON))
 
     def _has_error_icon(self) -> bool:
         return bool(self.driver.find_elements(By.CSS_SELECTOR, ElementsEnum.ERROR_ICON))
@@ -80,8 +98,9 @@ class JobApplicatorService:
         click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISMISS_BUTTON)
         click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.DISCARD_BUTTON)
 
-    # Data/DB helpers ----------------------------------------------------------
-
+    # -------------------------------------------------------------------------
+    # Data/DB helpers
+    # -------------------------------------------------------------------------
     def _persist_filled_fields(self, fields: List[FormItemSchema], job_id: int) -> None:
         """
         Persists field label/value/type with *fresh* embeddings of the label.
@@ -96,8 +115,9 @@ class JobApplicatorService:
             )
             self.db.save_field_job(field_id=saved_field.id, job_id=job_id)
 
-    # Answer pipeline ----------------------------------------------------------
-
+    # -------------------------------------------------------------------------
+    # Answer pipeline
+    # -------------------------------------------------------------------------
     def _prepare_items_with_embeddings(self, payload: List[Dict[str, str]]) -> List[FormItemSchema]:
         """
         Takes raw parsed payload -> FormItemSchema list, computes and attaches embeddings (float32 bytes).
@@ -108,14 +128,12 @@ class JobApplicatorService:
             item.embeddings = np.asarray(emb, dtype=np.float32).tobytes()
         return items
 
-    def _hydrate_answers_from_history(self, items: List["FormItemSchema"]) -> None:
+    def _hydrate_answers_from_history(self, items: List[FormItemSchema]) -> None:
         """
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
         """
-
-        # Load historical fields once
-        historical = self.db.get_all_fields()  # expects objects with .embedding, .label,
+        historical = self.db.get_all_fields()
         if not historical or not items:
             return
 
@@ -141,3 +159,90 @@ class JobApplicatorService:
         for item in items:
             if not item.answer and item.label in lookup:
                 item.answer = lookup[item.label]
+
+    # -------------------------------------------------------------------------
+    # Parse form pipeline
+    # -------------------------------------------------------------------------
+    def parse_form_fields(self) -> List[Dict[str, str]]:
+        """Parse visible and enabled input, select, textarea, checkbox, and radio fields from the modal form."""
+        try:
+            modal = find_elements(
+                driver=self.driver,
+                by=By.CSS_SELECTOR,
+                selector=ElementsEnum.MODAL,
+                retries=5,
+                index=0,
+            )
+        except NoSuchElementException:
+            logger.error("❌ could not find modal element")
+            return []
+
+        form = next(iter(modal.find_elements(By.TAG_NAME, ElementsEnum.FORM)), None)
+        if not form:
+            return []
+
+        fields = (
+                extract_fields(form, ElementsEnum.INPUT_NOT_RADIO, include_fn=lambda el: el.is_displayed()
+                                                                                         and el.is_enabled() and not el.get_attribute("value"))
+                + extract_fields(
+            form,
+            ElementsEnum.SELECT,
+            include_fn=lambda el: (
+                    el.is_displayed()
+                    and el.is_enabled()
+                    and ((el.get_attribute("value") or "").strip() in ("", "Select an option"))
+            ),
+            include_options=True,
+        )
+                + extract_textareas(form)
+                + extract_checkbox_groups(form)
+                + extract_radio_groups(form)
+        )
+
+        return fields
+
+    # -------------------------------------------------------------------------
+    # Filling fields
+    # -------------------------------------------------------------------------
+    def fill_fields(
+            self,
+            fields: Iterable[Dict[str, Any]],
+            answers: Iterable[FormItemSchema],
+    ) -> List[FormItemSchema]:
+        """
+        Fill collection of form fields using (label -> answer) pairs.
+
+        Returns a list of FormItemSchema rows describing what was attempted.
+        """
+        result: List[FormItemSchema] = []
+        answer_map = {str(a.label): a.answer for a in answers}
+
+        for item in fields:
+            field_id = item["id"]
+            label = item["label"]
+
+            el = wait_present_by_id(self.wait, field_id)
+
+            inferred_type = infer_type(el)
+            answer = answer_map.get(label)
+
+            result.append(FormItemSchema(label=label, answer=answer, type=inferred_type))
+
+            # Skip if no provided answer, but still report in result
+            if answer in (None, ""):
+                continue
+
+            tag = el.tag_name.lower()
+
+            if tag == "input":
+                handle_input(self.driver, el, answer)
+            elif tag == "select":
+                handle_select(self.driver, el, answer)
+            elif tag == "textarea":
+                handle_textarea(self.driver, el, answer)
+            elif tag == "fieldset":
+                handle_fieldset(self.driver, self.wait, el, answer)
+            else:
+                handle_generic_editable(self.driver, el, answer)
+
+        return result

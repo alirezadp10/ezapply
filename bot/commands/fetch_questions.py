@@ -8,7 +8,9 @@ from selenium.webdriver.common.by import By
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import JobStatusEnum, ModesEnum
-from bot.helpers.helpers import body_has_text, click_if_exists, get_and_wait_until_loaded
+from bot.helpers.dom_utils import click_if_exists
+from bot.helpers.page_load import get_and_wait_until_loaded
+from bot.helpers.page_state import body_has_text
 from bot.logger_manager import setup_logger
 from bot.services import AuthenticationService, JobApplicatorService
 from bot.settings import settings
