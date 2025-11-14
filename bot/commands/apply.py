@@ -20,7 +20,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run Selenium LinkedIn Bot")
     parser.add_argument("--username", "-u", required=True, help="LinkedIn username")
     parser.add_argument("--password", "-p", required=True, help="LinkedIn password")
-    parser.add_argument("--without_submit", "-f", default=False, help="Just gather the questions")
+    parser.add_argument("--without_submit", "-f", action="store_true", help="Just gather the questions")
     return parser.parse_args()
 
 
@@ -30,28 +30,20 @@ def main():
 
     logger.info("🚀 Running SeleniumBot in mode: apply")
 
-    # Single DB manager for the whole run
     db = DBManager()
 
-    # Start driver
     driver = DriverManager.create_driver(profile=args.username)
 
-    # Authenticate
-    AuthenticationService(driver).login(
-        username=args.username,
-        password=args.password,
-    )
+    AuthenticationService(driver).login(username=args.username, password=args.password)
 
-    try:
-        jobs = db.job.get_not_applied() if args.without_submit else db.job.get_ready_for_apply()
+    jobs = db.job.get_not_applied() if args.without_submit else db.job.get_ready_for_apply()
 
-        for job in jobs:
+    for job in jobs:
+        try:
             get_and_wait_until_loaded(driver, job.url)
             time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
 
-            # -------------------------------
-            # WORK TYPE CHECKS
-            # -------------------------------
+            # --- WORK TYPE CHECK ----
             if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
                 db.job.update_status(job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
                 logger.error("❌ Work type mismatch.")
@@ -62,9 +54,7 @@ def main():
                 logger.error("❌ Request has been expired.")
                 continue
 
-            # -------------------------------
-            # ATTEMPT TO CLICK APPLY BUTTON
-            # -------------------------------
+            # --- APPLY BUTTON ----
             if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
                 db.job.update_status(job.id, JobStatusEnum.APPLY_BUTTON)
                 logger.error("❌ Couldn't find apply button.")
@@ -77,9 +67,10 @@ def main():
 
             applicator = JobApplicatorService(driver=driver, db=db)
             applicator.run(job=job, submit=not args.without_submit)
+        except Exception as ex:
+            logger.error(f"❌ error: {ex}")
 
-    finally:
-        db.close()
+    db.close()
 
 
 if __name__ == "__main__":
