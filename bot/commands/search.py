@@ -162,6 +162,7 @@ def main():
         logger.exception(f"❌ Critical failure in main loop: {e}")
     finally:
         safe_action(lambda: DriverManager.close_driver(driver), name="close_driver")
+        db.close()
 
 
 if __name__ == "__main__":

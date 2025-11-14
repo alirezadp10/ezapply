@@ -69,12 +69,15 @@ class JobApplicatorService:
                 if self._check_questions_have_been_finished():
                     if not submit:
                         self.db.job.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
-                        logger.error("✅ Job is ready for apply.")
+                        logger.success("✅ Job is ready for apply.")
                         return
 
-                    self.db.job.update_status(pk=job.id, status=JobStatusEnum.APPLIED)
-                    logger.error("✅ Job has been submitted.")
-                    return
+                    if click_if_exists(self.driver, By.CSS_SELECTOR, ElementsEnum.SUBMIT_BUTTON):
+                        self.db.job.update_status(pk=job.id, status=JobStatusEnum.APPLIED)
+                        logger.success("✅ Job has been submitted.")
+                        return
+                    else:
+                        logger.error("❌ Couldn't submit the form.")
 
                 if self._next_step():
                     continue

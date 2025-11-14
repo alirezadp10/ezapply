@@ -32,5 +32,8 @@ class JobRepository:
             .all()
         )
 
+    def get_ready_for_apply(self, session):
+        return session.query(Job).filter(Job.status == JobStatusEnum.READY_FOR_APPLY).all()
+
     def update_status(self, session, pk, status):
         session.execute(update(Job).where(Job.id == pk).values(status=status))

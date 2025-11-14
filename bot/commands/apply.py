@@ -43,7 +43,7 @@ def main():
     )
 
     try:
-        jobs = db.job.get_not_applied()
+        jobs = db.job.get_not_applied() if args.without_submit else db.job.get_ready_for_apply()
 
         for job in jobs:
             get_and_wait_until_loaded(driver, job.url)
@@ -75,9 +75,8 @@ def main():
 
             logger.info(f"🔎 Processing job #{job.id}")
 
-            with db.transaction():
-                applicator = JobApplicatorService(driver=driver, db=db)
-                applicator.run(job=job, submit=not args.without_submit)
+            applicator = JobApplicatorService(driver=driver, db=db)
+            applicator.run(job=job, submit=not args.without_submit)
 
     finally:
         db.close()
