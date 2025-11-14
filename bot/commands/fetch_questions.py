@@ -29,6 +29,9 @@ def main():
 
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
 
+    # Single DB manager for the whole run
+    db = DBManager()
+
     # Start driver
     driver = DriverManager.create_driver(profile=args.username)
 
@@ -38,13 +41,8 @@ def main():
         password=args.password,
     )
 
-    # Single DB manager for the whole run
-    db = DBManager()
-
     try:
-        # First transaction: load jobs
-        with db.transaction():
-            jobs = db.jobs.get_not_applied(db.session)
+        jobs = db.jobs.get_not_applied()
 
         for job in jobs:
             get_and_wait_until_loaded(driver, job.url)
@@ -54,14 +52,12 @@ def main():
             # WORK TYPE CHECKS
             # -------------------------------
             if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
-                with db.transaction():
-                    db.jobs.update_status(db.session, job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
+                db.jobs.update_status(db.session, job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
                 logger.error("❌ Work type mismatch.")
                 continue
 
             if body_has_text(driver, "No longer accepting applications"):
-                with db.transaction():
-                    db.jobs.update_status(db.session, job.id, JobStatusEnum.EXPIRED)
+                db.jobs.update_status(db.session, job.id, JobStatusEnum.EXPIRED)
                 logger.error("❌ Request has been expired.")
                 continue
 
@@ -69,8 +65,7 @@ def main():
             # ATTEMPT TO CLICK APPLY BUTTON
             # -------------------------------
             if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
-                with db.transaction():
-                    db.jobs.update_status(db.session, job.id, JobStatusEnum.APPLY_BUTTON)
+                db.jobs.update_status(db.session, job.id, JobStatusEnum.APPLY_BUTTON)
                 logger.error("❌ Couldn't find apply button.")
                 continue
 

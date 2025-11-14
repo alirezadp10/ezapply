@@ -33,6 +33,7 @@ from bot.settings import settings
 class JobApplicatorService:
     def __init__(self, driver, db, wait_seconds: int = 10):
         self.driver = driver
+        self.db = db
         self.wait = WebDriverWait(driver, wait_seconds)
 
     # -------------------------------------------------------------------------
@@ -60,12 +61,12 @@ class JobApplicatorService:
 
                 if self._has_error_icon():
                     self._close_and_discard()
-                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.FILL_OUT_FORM)
+                    self.db.jobs.update_status(pk=job_id, status=JobStatusEnum.FILL_OUT_FORM)
                     logger.error("❌ Couldn't fill out the form.")
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.update_job_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
+                    self.db.jobs.update_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
                     logger.error("✅ Job is ready for apply.")
                     return
 
@@ -106,13 +107,13 @@ class JobApplicatorService:
         """
         for field in fields:
             embeddings = EmbeddingService.get_embedding(field.label)
-            saved_field = self.db.save_field(
+            saved_field = self.db.fields.insert(
                 label=field.label,
                 value=field.answer,
                 type=field.type,
                 embeddings=embeddings,
             )
-            self.db.save_field_job(field_id=saved_field.id, job_id=job_id)
+            self.db.field_job.insert(field_id=saved_field.id, job_id=job_id)
 
     # -------------------------------------------------------------------------
     # Answer pipeline
@@ -132,7 +133,7 @@ class JobApplicatorService:
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
         """
-        historical = self.db.get_all_fields()
+        historical = self.db.fields.get_all()
         if not historical or not items:
             return
 

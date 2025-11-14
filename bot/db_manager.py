@@ -58,14 +58,17 @@ class DBManager:
     def _load_repositories(self):
         import bot.repositories as repo_pkg
 
-        for _, module_name, _ in pkgutil.iter_modules(repo_pkg.__path__):
-            module = importlib.import_module(f"bot.repositories.{module_name}")
+        package_path = repo_pkg.__path__
 
-            # find repository classes inside the module
-            for name, obj in inspect.getmembers(module, inspect.isclass):
-                if name.endswith("Repository"):
-                    key = name.replace("Repository", "").lower()  # jobs, fields, field_job
-                    instance = obj()
+        for module_finder, name, ispkg in pkgutil.walk_packages(package_path, repo_pkg.__name__ + "."):
+            # import each module found
+            module = importlib.import_module(name)
+
+            # find repository classes inside that module
+            for cls_name, cls_obj in inspect.getmembers(module, inspect.isclass):
+                if cls_name.endswith("Repository"):
+                    key = cls_name.replace("Repository", "").lower()
+                    instance = cls_obj()
                     self._repos[key] = RepoProxy(self, instance)
 
     # Access repos like db.jobs, db.fields, db.field_jobs
