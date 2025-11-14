@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import pkgutil
+import re
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator
 
@@ -67,7 +68,8 @@ class DBManager:
             # find repository classes inside that module
             for cls_name, cls_obj in inspect.getmembers(module, inspect.isclass):
                 if cls_name.endswith("Repository"):
-                    key = cls_name.replace("Repository", "").lower()
+                    name_without_suffix = cls_name.replace("Repository", "")
+                    key = re.sub(r'(?<!^)(?=[A-Z])', '_', name_without_suffix).lower()
                     instance = cls_obj()
                     self._repos[key] = RepoProxy(self, instance)
 

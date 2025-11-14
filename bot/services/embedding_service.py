@@ -47,7 +47,7 @@ class EmbeddingService:
             cls._SESSION.headers.update(
                 {
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
+                    "Authorization": f"Bearer {settings.DEEPINFRA_API_KEY}",
                 }
             )
         return cls._SESSION
