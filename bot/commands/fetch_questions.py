@@ -76,7 +76,7 @@ def main():
 
             with db.transaction():
                 applicator = JobApplicatorService(driver=driver, db=db)
-                applicator.apply_to_job(job_id=job.id)
+                applicator.apply_to_job(job=job)
 
     finally:
         db.close()

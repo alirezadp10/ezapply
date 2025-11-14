@@ -25,6 +25,7 @@ from bot.helpers.form_utils import (
     infer_type,
     wait_present_by_id,
 )
+from bot.models import Job
 from bot.schemas import FormItemSchema
 from bot.services import EmbeddingService
 from bot.settings import settings
@@ -39,7 +40,7 @@ class JobApplicatorService:
     # -------------------------------------------------------------------------
     # Public API
     # -------------------------------------------------------------------------
-    def apply_to_job(self, job_id: int):
+    def apply_to_job(self, job: Job):
         try:
             step_count = 0
             while True:
@@ -57,16 +58,16 @@ class JobApplicatorService:
                     ai_answers = self._generate_ai_answers_for_unanswered(items)
                     self._merge_ai_answers(items, ai_answers)
                     fields = self.fill_fields(payload, items)
-                    self._persist_filled_fields(fields, job_id)
+                    self._persist_filled_fields(fields, job.id)
 
                 if self._has_error_icon():
                     self._close_and_discard()
-                    self.db.jobs.update_status(pk=job_id, status=JobStatusEnum.FILL_OUT_FORM)
-                    logger.error("❌ Couldn't fill out the form.")
+                    self.db.jobs.update_status(pk=job.id, status=JobStatusEnum.FILL_OUT_FORM)
+                    logger.error(f"❌ Couldn't fill out the form. {job.url}")
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.jobs.update_status(pk=job_id, status=JobStatusEnum.READY_FOR_APPLY)
+                    self.db.jobs.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
                     logger.error("✅ Job is ready for apply.")
                     return
 
