@@ -19,7 +19,7 @@ class Settings:
     LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
 
     USER_INFORMATION: str = os.getenv("USER_INFORMATION")
-    JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 3600 * 6))
+    JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 24)) * 3600 # in hour
     WORK_TYPE: str = os.getenv("WORK_TYPE", "remote")
     KEYWORDS: str = os.getenv("KEYWORDS", "laravel,python,go")
     COUNTRIES: str = os.getenv("COUNTRIES")
