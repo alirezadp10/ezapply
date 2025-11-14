@@ -9,13 +9,18 @@ IS_RELEVANT_SYSTEM_PROMPT = """
 You are a Job Relevance Classifier.
 
 Your ONLY task:
-Given a job title and a list of target keywords,
+Given a job title and job description,
 you must answer ONLY "yes" or "no".
 
-Rules:
+Decision Rule:
+- Respond "yes" ONLY if the role is clearly a developer or software engineering job
+  (e.g., Backend Developer, Python Developer, Software Engineer, Full-Stack Engineer).
+- If the role is not primarily a developer role, you MUST respond "no".
+
+Strict Output Rules:
 - Do NOT explain.
 - Do NOT add anything else.
-- Respond strictly with: yes  OR  no.
+- Respond strictly with: yes   OR   no.
 """
 
 
@@ -29,9 +34,6 @@ class JobRelevanceAgent:
         JOB DESCRIPTION:
         {job_description}
 
-        CANDIDATE PROFILE:
-        {settings.USER_INFORMATION}
-
         Is this job relevant?
         """
 
@@ -44,7 +46,8 @@ class JobRelevanceAgent:
 
         for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
-                return agent.run_sync(prompt).output.strip().lower()
+                result = agent.run_sync(prompt).output.strip().lower()
+                return result == "yes"
 
             except Exception as e:
                 logger.warning(f"⚠️ JobRelevanceAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")
