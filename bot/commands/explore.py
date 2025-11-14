@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from bot.agents import JobRelevanceAgent
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
-from bot.enums import Country, ElementsEnum, ModesEnum
+from bot.enums import Country, ElementsEnum
 from bot.helpers.dom_utils import click_if_exists, get_children
 from bot.helpers.page_load import get_and_wait_until_loaded
 from bot.helpers.page_state import body_has_text, has_offsite_apply_icon
@@ -99,6 +99,7 @@ def process_job_item(driver, db, job_item, country, keyword):
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
     if not JobRelevanceAgent.ask(job_title=title, job_description=description):
+        logger.error("❌ Job is not relevant.")
         return
 
     try:
@@ -147,7 +148,7 @@ def _split_csv(value: Optional[str]) -> List[str]:
 
 def main():
     setup_logger()
-    logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.EXPLORE}")
+    logger.info("🚀 Running SeleniumBot in mode: explore")
     driver = DriverManager.create_driver(incognito=True)
     db = DBManager()
 

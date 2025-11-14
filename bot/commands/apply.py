@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
-from bot.enums import JobStatusEnum, ModesEnum
+from bot.enums import JobStatusEnum
 from bot.helpers.dom_utils import click_if_exists
 from bot.helpers.page_load import get_and_wait_until_loaded
 from bot.helpers.page_state import body_has_text
@@ -27,7 +27,7 @@ def main():
     setup_logger()
     args = parse_args()
 
-    logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
+    logger.info("🚀 Running SeleniumBot in mode: apply")
 
     # Single DB manager for the whole run
     db = DBManager()
