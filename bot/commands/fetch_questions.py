@@ -46,17 +46,13 @@ def main():
             logger.error("❌ Request has been expired.")
             continue
 
-        if not click_if_exists(
-            driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5
-        ):
+        if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
             db.update_job_status(job.id, JobStatusEnum.APPLY_BUTTON)
             logger.error("❌ Couldn't find apply button.")
             continue
 
         if body_has_text(driver, "Job search safety reminder"):
-            driver.find_element(
-                By.CSS_SELECTOR, "[data-live-test-job-apply-button]"
-            ).click()
+            driver.find_element(By.CSS_SELECTOR, "[data-live-test-job-apply-button]").click()
 
         logger.info(f"🔎 Processing job #{job.id}")
         JobApplicatorService(driver=driver, db=db).apply_to_job(job_id=job.id)

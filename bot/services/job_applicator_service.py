@@ -59,7 +59,6 @@ class JobApplicatorService:
             logger.error(f"❌ {str(e)}")
             return
 
-
     def _next_step(self) -> bool:
         """
         Attempts to go to the next step (or review). Returns True if we clicked something.
@@ -99,9 +98,7 @@ class JobApplicatorService:
 
     # Answer pipeline ----------------------------------------------------------
 
-    def _prepare_items_with_embeddings(
-        self, payload: List[Dict[str, str]]
-    ) -> List[FormItemSchema]:
+    def _prepare_items_with_embeddings(self, payload: List[Dict[str, str]]) -> List[FormItemSchema]:
         """
         Takes raw parsed payload -> FormItemSchema list, computes and attaches embeddings (float32 bytes).
         """
@@ -118,17 +115,13 @@ class JobApplicatorService:
         """
 
         # Load historical fields once
-        historical = (
-            self.db.get_all_fields()
-        )  # expects objects with .embedding, .label,
+        historical = self.db.get_all_fields()  # expects objects with .embedding, .label,
         if not historical or not items:
             return
 
         EmbeddingService.fill_out_items(items, historical)
 
-    def _generate_ai_answers_for_unanswered(
-        self, items: List[FormItemSchema]
-    ) -> List[Dict[str, str]]:
+    def _generate_ai_answers_for_unanswered(self, items: List[FormItemSchema]) -> List[Dict[str, str]]:
         """
         Calls AI service for only unanswered items. Returns AI-produced answers
         as a list of dicts with keys: label, answer, embeddings (optional).
@@ -138,9 +131,7 @@ class JobApplicatorService:
             return []
         return FormAnswerAgent.ask(unanswered)
 
-    def _merge_ai_answers(
-        self, items: List[FormItemSchema], ai_answers: List[Dict[str, str]]
-    ) -> None:
+    def _merge_ai_answers(self, items: List[FormItemSchema], ai_answers: List[Dict[str, str]]) -> None:
         """
         Merge AI answers into items in-place by label.
         """

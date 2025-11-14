@@ -46,6 +46,7 @@ class NormalizerAgent:
 
         return (
             Agent(
+                name="normalizer",
                 model=settings.OPENAI_MODEL_NAME,
                 system_prompt=NORMALIZER_SYSTEM_PROMPT,
                 output_type=NormalizerOutputSchema,

@@ -24,9 +24,7 @@ class FormFillerService:
     # -----------------------------
     # Public API
     # -----------------------------
-    def fill_fields(
-        self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemSchema]
-    ) -> List[FormItemSchema]:
+    def fill_fields(self, fields: Iterable[Dict[str, Any]], answers: Iterable[FormItemSchema]) -> List[FormItemSchema]:
         """
         Fill collection of form fields using (label -> answer) pairs.
 
@@ -212,16 +210,12 @@ class FormFillerService:
 
         return False
 
-    def _set_checkboxes_in_fieldset(
-        self, fieldset: WebElement, answer: Any, unselect_others: bool = False
-    ) -> bool:
+    def _set_checkboxes_in_fieldset(self, fieldset: WebElement, answer: Any, unselect_others: bool = False) -> bool:
         if answer is None or str(answer).strip() == "":
             return False
 
         desired = self._normalize_multi_answer(answer)
-        checkboxes = fieldset.find_elements(
-            By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX
-        )
+        checkboxes = fieldset.find_elements(By.CSS_SELECTOR, ElementsEnum.INPUT_CHECKBOX)
 
         labels: Dict[str, tuple[WebElement, str]] = {
             lab.get_attribute("for"): (lab, (lab.text or "").strip().lower())
@@ -258,9 +252,7 @@ class FormFillerService:
 
         # Ensure desired are checked (value -> exact label -> contains in label)
         for want in desired:
-            candidates = list(by_value.get(want, [])) or list(
-                by_label_text.get(want, [])
-            )
+            candidates = list(by_value.get(want, [])) or list(by_label_text.get(want, []))
             if not candidates:
                 for label_txt, cbs in by_label_text.items():
                     if want in label_txt:
@@ -288,9 +280,7 @@ class FormFillerService:
                 label_txt = labels.get(rid, (None, ""))[1] if rid in labels else ""
 
                 is_desired = (
-                    (val in desired)
-                    or (label_txt in desired)
-                    or any(w in label_txt for w in desired if len(w) >= 3)
+                    (val in desired) or (label_txt in desired) or any(w in label_txt for w in desired if len(w) >= 3)
                 )
                 if cb.is_selected() and not is_desired:
                     if not click_label_for(cb):

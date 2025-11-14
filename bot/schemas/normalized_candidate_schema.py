@@ -1,18 +1,18 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, Field
 
 
 class NormalizedCandidateSchema(BaseModel):
-    name: Optional[str] = None
-    experience_years: Optional[int] = None
-    primary_languages: List[str] = Field(default_factory=list)
-    frameworks: List[str] = Field(default_factory=list)
-    databases: List[str] = Field(default_factory=list)
-    infra: List[str] = Field(default_factory=list)
-    message_queues: List[str] = Field(default_factory=list)
-    frontend: List[str] = Field(default_factory=list)
-    other_tools: List[str] = Field(default_factory=list)
-    certifications: List[str] = Field(default_factory=list)
-    english_level: Optional[str] = None
-    seniority: Optional[str] = None
+    candidate_name: str = ""
+    candidate_experience_years: int = 0
+    candidate_primary_languages: List[str] = Field(default_factory=list)
+    candidate_frameworks: List[str] = Field(default_factory=list)
+    candidate_databases: List[str] = Field(default_factory=list)
+    candidate_infra: List[str] = Field(default_factory=list)
+    candidate_message_queues: List[str] = Field(default_factory=list)
+    candidate_frontend: List[str] = Field(default_factory=list)
+    candidate_other_tools: List[str] = Field(default_factory=list)
+    candidate_certifications: List[str] = Field(default_factory=list)
+    candidate_english_level: str = ""
+    candidate_seniority: str = ""

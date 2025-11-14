@@ -1,6 +1,6 @@
 from loguru import logger
 
-from bot.db_manager import DBManager
+from bot.agents import NormalizerAgent
 from bot.enums import ModesEnum
 from bot.logger_manager import setup_logger
 
@@ -9,9 +9,8 @@ def main():
     setup_logger()
 
     logger.info(f"🚀 Running SeleniumBot in mode: {ModesEnum.FETCH_QUESTIONS}")
-    db = DBManager()
 
-    db.get_not_applied_jobs()
+    NormalizerAgent.ask("foo", "bar")
 
 
 if __name__ == "__main__":
