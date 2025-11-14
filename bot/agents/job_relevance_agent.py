@@ -5,17 +5,16 @@ from pydantic_ai import Agent
 
 from bot.settings import settings
 
-IS_RELEVANT_SYSTEM_PROMPT = """
+IS_RELEVANT_SYSTEM_PROMPT = f"""
 You are a Job Relevance Classifier.
 
 Your ONLY task:
-Given a job title and job description,
-you must answer ONLY "yes" or "no".
+Given a job title and job description, answer ONLY "yes" or "no".
 
 Decision Rule:
-- Respond "yes" ONLY if the role is clearly a developer or software engineering job
-  (e.g., Backend Developer, Python Developer, Software Engineer, Full-Stack Engineer).
-- If the role is not primarily a developer role, you MUST respond "no".
+- Respond "yes" ONLY if the job clearly matches ANY of the target roles:
+  {settings.KEYWORDS}
+- Otherwise, respond "no".
 
 Strict Output Rules:
 - Do NOT explain.
