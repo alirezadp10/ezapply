@@ -17,9 +17,6 @@ Your job:
 
 
 class FormAnswerAgent:
-    MAX_RETRIES = 4
-    BACKOFF_BASE = 0.5  # seconds
-
     @staticmethod
     def ask(labels):
         prompt = f"""
@@ -39,7 +36,7 @@ class FormAnswerAgent:
             output_type=list,
         )
 
-        for attempt in range(1, FormAnswerAgent.MAX_RETRIES + 1):
+        for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
                 result = agent.run_sync(prompt).output
                 return result
@@ -47,13 +44,13 @@ class FormAnswerAgent:
             except Exception as e:
                 logger.warning(
                     f"⚠️ FormAnswerAgent error on attempt "
-                    f"{attempt}/{FormAnswerAgent.MAX_RETRIES}: {e}"
+                    f"{attempt}/{settings.AI_MAX_RETRIES}: {e}"
                 )
 
-                if attempt == FormAnswerAgent.MAX_RETRIES:
+                if attempt == settings.AI_MAX_RETRIES:
                     logger.error("❌ FormAnswerAgent failed after all retries")
                     raise
 
-                sleep_time = FormAnswerAgent.BACKOFF_BASE * (2 ** (attempt - 1))
+                sleep_time = settings.AI_BACKOFF_BASE * (2 ** (attempt - 1))
                 logger.info(f"⏳ Retrying in {sleep_time:.1f}s…")
                 time.sleep(sleep_time)

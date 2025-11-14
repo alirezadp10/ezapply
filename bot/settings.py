@@ -8,6 +8,8 @@ load_dotenv()
 
 @dataclass
 class Settings:
+    LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
+
     SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "sqlite:///./storage/data.db")
     LOG_DIR: str = os.getenv("LOG_DIR", "storage/logs")
     HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
@@ -15,8 +17,6 @@ class Settings:
     DELAY_TIME: int = int(os.getenv("DELAY_TIME", 5))
     SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", 0.95))
     MAX_STEPS_PER_APPLICATION: int = int(os.getenv("MAX_STEPS_PER_APPLICATION", 10))
-
-    LINKEDIN_BASE_URL: str = "https://www.linkedin.com"
 
     USER_INFORMATION: str = os.getenv("USER_INFORMATION")
     JOB_SEARCH_TIME_WINDOW: int = int(os.getenv("JOB_SEARCH_TIME_WINDOW", 24)) * 3600 # in hour
@@ -33,5 +33,8 @@ class Settings:
     OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "openai:meta-llama/llama-3.3-8b-instruct:free")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
 
+    # AI
+    AI_MAX_RETRIES: int = os.getenv("AI_MAX_RETRIES", 5)
+    AI_BACKOFF_BASE: float = os.getenv("AI_BACKOFF_BASE", 0.5)
 
 settings = Settings()

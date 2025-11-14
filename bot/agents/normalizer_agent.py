@@ -30,9 +30,6 @@ Your output MUST follow this structure:
 
 
 class NormalizerAgent:
-    MAX_RETRIES = 4
-    BACKOFF_BASE = 0.5  # seconds
-
     @staticmethod
     def ask(job_title: str, job_description: str) -> NormalizerOutputSchema:
         prompt = f"""
@@ -56,22 +53,22 @@ class NormalizerAgent:
         )
 
         # Retry loop
-        for attempt in range(1, NormalizerAgent.MAX_RETRIES + 1):
+        for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
                 result = agent.run_sync(prompt)
                 return result.output
 
             except Exception as e:
                 logger.warning(
-                    f"⚠️ NormalizerAgent error on attempt {attempt}/{NormalizerAgent.MAX_RETRIES}: {e}"
+                    f"⚠️ NormalizerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}"
                 )
 
                 # If this was the last retry -> re-raise
-                if attempt == NormalizerAgent.MAX_RETRIES:
+                if attempt == settings.AI_MAX_RETRIES:
                     logger.error("❌ NormalizerAgent failed after all retries")
                     raise
 
                 # Otherwise: exponential backoff
-                sleep_time = NormalizerAgent.BACKOFF_BASE * (2 ** (attempt - 1))
+                sleep_time = settings.AI_BACKOFF_BASE * (2 ** (attempt - 1))
                 logger.info(f"⏳ Retrying in {sleep_time:.1f}s…")
                 time.sleep(sleep_time)
