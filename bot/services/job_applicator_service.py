@@ -40,7 +40,7 @@ class JobApplicatorService:
     # -------------------------------------------------------------------------
     # Public API
     # -------------------------------------------------------------------------
-    def apply_to_job(self, job: Job):
+    def run(self, job: Job, submit: bool) -> None:
         try:
             step_count = 0
             while True:
@@ -67,8 +67,13 @@ class JobApplicatorService:
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.job.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
-                    logger.error("✅ Job is ready for apply.")
+                    if not submit:
+                        self.db.job.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
+                        logger.error("✅ Job is ready for apply.")
+                        return
+
+                    self.db.job.update_status(pk=job.id, status=JobStatusEnum.APPLIED)
+                    logger.error("✅ Job has been submitted.")
                     return
 
                 if self._next_step():

@@ -7,7 +7,7 @@ class JobStatusEnum(str, Enum):
     WORK_TYPE_MISMATCH = "work_type_mismatch"
     EXPIRED = "expired"
     READY_FOR_APPLY = "ready_for_apply"
-    SUCCEEDED = "succeeded"
+    APPLIED = "applied"
 
     @property
     def message(self) -> str:
@@ -17,7 +17,7 @@ class JobStatusEnum(str, Enum):
             self.WORK_TYPE_MISMATCH: "Work type mismatch",
             self.EXPIRED: "Request has been expired",
             self.READY_FOR_APPLY: "Ready for apply",
-            self.SUCCEEDED: "Succeeded",
+            self.APPLIED: "applied",
         }[self]
 
     def __str__(self) -> str:

@@ -20,8 +20,8 @@ from bot.logger_manager import setup_logger
 from bot.settings import settings
 
 
-def explore_jobs(driver, db, countries, keywords):
-    """Explore job listings for all countries and keywords."""
+def search_jobs(driver, db, countries, keywords):
+    """Search job listings for all countries and keywords."""
     for country in countries:
         country_val = _country_value(country)
         for keyword in keywords:
@@ -148,7 +148,7 @@ def _split_csv(value: Optional[str]) -> List[str]:
 
 def main():
     setup_logger()
-    logger.info("🚀 Running SeleniumBot in mode: explore")
+    logger.info("🚀 Running SeleniumBot in mode: search")
     driver = DriverManager.create_driver(incognito=True)
     db = DBManager()
 
@@ -156,7 +156,7 @@ def main():
     keywords = _resolve_keywords()
 
     try:
-        explore_jobs(driver, db, countries, keywords)
+        search_jobs(driver, db, countries, keywords)
         logger.info("🏁 Exploration completed successfully.")
     except Exception as e:
         logger.exception(f"❌ Critical failure in main loop: {e}")

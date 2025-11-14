@@ -20,6 +20,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run Selenium LinkedIn Bot")
     parser.add_argument("--username", "-u", required=True, help="LinkedIn username")
     parser.add_argument("--password", "-p", required=True, help="LinkedIn password")
+    parser.add_argument("--without_submit", "-f", default=False, help="Just gather the questions")
     return parser.parse_args()
 
 
@@ -76,7 +77,7 @@ def main():
 
             with db.transaction():
                 applicator = JobApplicatorService(driver=driver, db=db)
-                applicator.apply_to_job(job=job)
+                applicator.run(job=job, submit=not args.without_submit)
 
     finally:
         db.close()
