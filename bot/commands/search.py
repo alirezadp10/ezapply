@@ -99,7 +99,7 @@ def process_job_item(driver, db, job_item, country, keyword):
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
     if not JobRelevanceAgent.ask(job_title=title, job_description=description):
-        logger.error("❌ Job is not relevant.")
+        logger.error(f"❌ Job is not relevant. {title} {link}")
         return
 
     try:
