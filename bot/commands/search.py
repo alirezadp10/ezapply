@@ -103,7 +103,7 @@ def process_job_item(driver, db, job_item, country, keyword):
         return
 
     if db.job.exists(job_id):
-        logger.info(f"💾 This job has already been saved: {job_id}")
+        logger.info(f"💾 This job has already been saved: #{job_id}")
         return
 
     db.job.insert(
