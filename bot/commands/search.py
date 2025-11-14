@@ -102,22 +102,20 @@ def process_job_item(driver, db, job_item, country, keyword):
         logger.error(f"❌ Job is not relevant. {title} {link}")
         return
 
-    try:
-        status = db.job.insert(
-            job_id=job_id,
-            title=title,
-            description=description,
-            country=country,
-            keyword=keyword,
-            url=link,
-        )
-        if status:
-            logger.success(f"✅ Saved job: #{job_id} '{title}' ({country}, {keyword})")
-        else:
-            logger.info(f"💾 This job has already been saved: {job_id}")
+    if db.job.exists(job_id):
+        logger.info(f"💾 This job has already been saved: {job_id}")
+        return
 
-    except Exception as e:
-        logger.exception(f"💾 Failed saving job {job_id}: {e}")
+    db.job.insert(
+        job_id=job_id,
+        title=title,
+        description=description,
+        country=country,
+        keyword=keyword,
+        url=link,
+    )
+
+    logger.success(f"✅ Saved job: #{job_id} '{title}' ({country}, {keyword})")
 
 
 def _country_value(country_name: str) -> str:
