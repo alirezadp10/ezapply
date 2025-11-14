@@ -16,6 +16,7 @@ def get_children(driver, root):
         root_el = root
     return root_el.find_elements(By.XPATH, "./*")
 
+
 def find_elements(driver, by, selector, index=0, retries=0):
     for attempt in range(retries + 1):
         try:
@@ -23,6 +24,7 @@ def find_elements(driver, by, selector, index=0, retries=0):
         except Exception:
             time.sleep(settings.DELAY_TIME + random.uniform(1, 2))
     raise Exception(f"Could not find element {selector} in {retries} attempts")
+
 
 def click_if_exists(driver, by, selector, index=0, retries=0) -> bool:
     for attempt in range(retries + 1):

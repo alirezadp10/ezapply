@@ -5,9 +5,9 @@ from bot.settings import settings
 
 
 def build_job_url(
-        keyword: Optional[str] = None,
-        country_id: Optional[str] = None,
-        job_id: Optional[str] = None,
+    keyword: Optional[str] = None,
+    country_id: Optional[str] = None,
+    job_id: Optional[str] = None,
 ) -> str:
     base = settings.LINKEDIN_BASE_URL
 
