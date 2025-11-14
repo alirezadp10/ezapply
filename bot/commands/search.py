@@ -98,7 +98,8 @@ def process_job_item(driver, db, job_item, country, keyword):
     desc_elem = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.JOB_DESCRIPTION)
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
-    if not JobRelevanceAgent.ask(job_title=title, job_description=description):
+    if not JobRelevanceAgent.ask(job_title=title,
+                                 job_description=description):
         logger.error("❌ Job is not relevant.")
         return
 
