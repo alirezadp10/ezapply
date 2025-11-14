@@ -4,7 +4,7 @@ from bot.enums import JobStatusEnum
 from bot.models import Job
 
 
-class JobsRepository:
+class JobRepository:
     def exists(self, session, job_id: str) -> bool:
         return session.execute(select(Job).where(Job.job_id == job_id)).scalar_one_or_none() is not None
 

@@ -33,7 +33,7 @@ Your output MUST follow this structure:
 
 class NormalizerAgent:
     @staticmethod
-    def ask(job_title: str, job_description: str) -> NormalizerOutputSchema:
+    def ask(job_title: str, job_description: str):
         prompt = f"""
         JOB TITLE:
         {job_title}
@@ -57,8 +57,7 @@ class NormalizerAgent:
         # Retry loop
         for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
-                result = agent.run_sync(prompt)
-                return result.output
+                return agent.run_sync(prompt).output
 
             except Exception as e:
                 logger.warning(f"⚠️ NormalizerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")

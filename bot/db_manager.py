@@ -73,7 +73,7 @@ class DBManager:
                     instance = cls_obj()
                     self._repos[key] = RepoProxy(self, instance)
 
-    # Access repos like db.jobs, db.fields, db.field_jobs
+    # Access repos like db.job, db.field, db.field_jobs
     def __getattr__(self, item):
         if item in self._repos:
             return self._repos[item]

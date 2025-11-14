@@ -44,8 +44,7 @@ class FormAnswerAgent:
 
         for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
-                result = agent.run_sync(prompt).output
-                return result
+                return agent.run_sync(prompt).output
 
             except Exception as e:
                 logger.warning(f"⚠️ FormAnswerAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")

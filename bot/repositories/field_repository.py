@@ -4,7 +4,7 @@ from sqlalchemy import select
 from bot.models import Field
 
 
-class FieldsRepository:
+class FieldRepository:
     def exists(self, session, label, value):
         return session.execute(select(Field).where(Field.label == label, Field.value == value)).scalar_one_or_none()
 

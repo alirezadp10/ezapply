@@ -21,13 +21,16 @@ Rules:
 
 class JobRelevanceAgent:
     @staticmethod
-    def ask(title: str) -> bool:
+    def ask(job_title: str, job_description: str) -> bool:
         prompt = f"""
         JOB TITLE:
-        {title}
+        {job_title}
 
-        TARGET KEYWORDS:
-        {settings.KEYWORDS}
+        JOB DESCRIPTION:
+        {job_description}
+
+        CANDIDATE PROFILE:
+        {settings.USER_INFORMATION}
 
         Is this job relevant?
         """
@@ -41,8 +44,7 @@ class JobRelevanceAgent:
 
         for attempt in range(1, settings.AI_MAX_RETRIES + 1):
             try:
-                result = agent.run_sync(prompt).output.strip().lower()
-                return result == "yes"
+                return agent.run_sync(prompt).output.strip().lower()
 
             except Exception as e:
                 logger.warning(f"⚠️ JobRelevanceAgent error on attempt {attempt}/{settings.AI_MAX_RETRIES}: {e}")

@@ -62,12 +62,12 @@ class JobApplicatorService:
 
                 if self._has_error_icon():
                     self._close_and_discard()
-                    self.db.jobs.update_status(pk=job.id, status=JobStatusEnum.FILL_OUT_FORM)
+                    self.db.job.update_status(pk=job.id, status=JobStatusEnum.FILL_OUT_FORM)
                     logger.error(f"❌ Couldn't fill out the form. {job.url}")
                     return
 
                 if self._check_questions_have_been_finished():
-                    self.db.jobs.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
+                    self.db.job.update_status(pk=job.id, status=JobStatusEnum.READY_FOR_APPLY)
                     logger.error("✅ Job is ready for apply.")
                     return
 
@@ -108,7 +108,7 @@ class JobApplicatorService:
         """
         for field in fields:
             embeddings = EmbeddingService.get_embedding(field.label)
-            saved_field = self.db.fields.insert(
+            saved_field = self.db.field.insert(
                 label=field.label,
                 value=field.answer,
                 type=field.type,
@@ -134,7 +134,7 @@ class JobApplicatorService:
         Fills answers for items whose labels closely match previously stored fields,
         using cosine similarity on embeddings. Operates in-place.
         """
-        historical = self.db.fields.get_all()
+        historical = self.db.field.get_all()
         if not historical or not items:
             return
 

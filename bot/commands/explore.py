@@ -6,6 +6,7 @@ from loguru import logger
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
+from bot.agents import JobRelevanceAgent
 from bot.db_manager import DBManager
 from bot.driver_manager import DriverManager
 from bot.enums import Country, ElementsEnum, ModesEnum
@@ -97,8 +98,11 @@ def process_job_item(driver, db, job_item, country, keyword):
     desc_elem = safe_find_element(driver, By.CLASS_NAME, ElementsEnum.JOB_DESCRIPTION)
     description = desc_elem.get_attribute("innerText") if desc_elem else ""
 
+    if not JobRelevanceAgent.ask(job_title=title, job_description=description):
+        return
+
     try:
-        status = db.jobs.insert(
+        status = db.job.insert(
             job_id=job_id,
             title=title,
             description=description,
