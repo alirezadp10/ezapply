@@ -28,7 +28,11 @@ class FormAnswerAgent:
         FORM LABELS TO FILL:
         {labels}
 
-        Return ONLY the list.
+        Return ONLY the list in the SAME format:
+        [
+          {{"label": "...", "answer": "..." }},
+          ...
+        ]
         """
 
         agent = Agent(

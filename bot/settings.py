@@ -30,7 +30,7 @@ class Settings:
     DEEPINFRA_API_KEY: str = os.getenv("DEEPINFRA_API_KEY")
 
     OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-    OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "openai:meta-llama/llama-3.3-8b-instruct:free")
+    OPENAI_MODEL_NAME: str = os.getenv("OPENAI_MODEL_NAME", "openai:nvidia/nemotron-nano-12b-v2-vl:free")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
 
     # AI
