@@ -46,18 +46,18 @@ def main():
             # --- WORK TYPE CHECK ----
             if body_has_text(driver, "On-site") or body_has_text(driver, "Hybrid"):
                 db.job.update_status(job.id, JobStatusEnum.WORK_TYPE_MISMATCH)
-                logger.error("❌ Work type mismatch.")
+                logger.error(f"❌ Work type mismatch. #{job.id}")
                 continue
 
             if body_has_text(driver, "No longer accepting applications"):
                 db.job.update_status(job.id, JobStatusEnum.EXPIRED)
-                logger.error("❌ Request has been expired.")
+                logger.error(f"❌ Request has been expired. #{job.id}")
                 continue
 
             # --- APPLY BUTTON ----
             if not click_if_exists(driver, By.CLASS_NAME, "jobs-apply-button", index=1, retries=5):
                 db.job.update_status(job.id, JobStatusEnum.APPLY_BUTTON)
-                logger.error("❌ Couldn't find apply button.")
+                logger.error(f"❌ Couldn't find apply button. #{job.id}")
                 continue
 
             if body_has_text(driver, "Job search safety reminder"):
