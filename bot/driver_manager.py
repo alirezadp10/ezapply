@@ -36,10 +36,10 @@ class DriverManager:
             "Page.addScriptToEvaluateOnNewDocument",
             {
                 "source": """
-            Object.defineProperty(navigator, 'webdriver', {
-              get: () => undefined
-            })
-          """
+                    Object.defineProperty(navigator, 'webdriver', {
+                      get: () => undefined
+                    })
+                """
             },
         )
         return driver
