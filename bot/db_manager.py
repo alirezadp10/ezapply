@@ -8,10 +8,12 @@ from typing import Any, Dict, Iterator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from bot.models import Base
 from bot.settings import settings
 
 engine = create_engine(settings.SQLITE_DB_PATH, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+Base.metadata.create_all(engine)
 
 
 # ----------------------------------------------------------
@@ -52,7 +54,6 @@ class DBManager:
         self.session: Session = SessionLocal()
         self._in_transaction = False
         self._repos: Dict[str, Any] = {}
-
         self._load_repositories()
 
     # Dynamically import all repositories
