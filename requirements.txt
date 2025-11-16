@@ -89,10 +89,11 @@ types-requests==2.31.0.6
 types-urllib3==1.26.25.14
 typing-inspection==0.4.2
 typing_extensions==4.15.0
-undetected-chromedriver==3.5.5
+undetected-chromedriver==3.5.4
 urllib3>=2.5.0,<3
 wcwidth==0.2.14
 websocket-client==1.9.0
 websockets==15.0.1
 wsproto==1.2.0
 zipp==3.23.0
+setuptools==80.9.0
